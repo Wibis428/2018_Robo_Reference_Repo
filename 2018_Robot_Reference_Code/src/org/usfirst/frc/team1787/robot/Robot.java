@@ -11,9 +11,10 @@ import org.usfirst.frc.team1787.robot.subsystems.PickupArm;
 import org.usfirst.frc.team1787.robot.subsystems.Shooter;
 import org.usfirst.frc.team1787.robot.subsystems.Turret;
 import org.usfirst.frc.team1787.robot.subsystems.Winch;
-import org.usfirst.frc.team1787.robot.utils.CustomJoystick;
 import org.usfirst.frc.team1787.robot.vision.CameraController;
 import org.usfirst.frc.team1787.robot.vision.ImageProcessor;
+
+import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -32,8 +33,10 @@ public class Robot extends TimedRobot {
   // Controls
   private final int RIGHT_JOYSTICK_ID = 0;
   private final int LEFT_JOYSTICK_ID = 1;
-  private CustomJoystick rightStick = new CustomJoystick(RIGHT_JOYSTICK_ID);
-  private CustomJoystick leftStick = new CustomJoystick(LEFT_JOYSTICK_ID);
+  private Joystick rightStick = new Joystick(RIGHT_JOYSTICK_ID);
+  private Joystick leftStick = new Joystick(LEFT_JOYSTICK_ID);
+  private final int JOYSTICK_ROTATE_AXIS = 2;
+  private final int JOYSTICK_SLIDER_AXIS = 3;
   
   // Button Map
   private final int DEPLOY_ARM_BUTTON = 3;
@@ -84,14 +87,10 @@ public class Robot extends TimedRobot {
   @Override
   public void robotInit() {
 	  // Default Period is 0.02 seconds per loop.
-	  this.setPeriod(DEFAULT_PERIOD);
+	  this.setPeriod(0.02);
 	  
 	  /*
 	   * TODO:
-	   * 1) Test new joystick methods for getting a single press.
-	   * 2) Test new joystick methods for getting specific axes
-	   * (custom joystick class may not be needed anymore)
-	   * 
 	   * 3) Update talons to new firmware version (I believe it's 3.3)
 	   * 4) finish going through all talon config features
 	   * 5) practice working with a sensor that's attatched to the talon
@@ -135,7 +134,7 @@ public class Robot extends TimedRobot {
    * This function is called periodically during operator control
    */
   @Override
-  public void teleopPeriodic() {
+  public void teleopPeriodic() {	
     // Driving
     if (rightStick.getMagnitude() > leftStick.getMagnitude()) {
       driveTrain.arcadeDrive(rightStick.getY(), rightStick.getX());
@@ -145,7 +144,7 @@ public class Robot extends TimedRobot {
     }
     
     // Gear Shifter
-    if (rightStick.getSlider() < 0) {
+    if (rightStick.getRawAxis(JOYSTICK_SLIDER_AXIS) < 0) {
       driveTrain.setGear(driveTrain.HIGH_GEAR);
     } else {
       driveTrain.setGear(driveTrain.LOW_GEAR);
@@ -176,7 +175,7 @@ public class Robot extends TimedRobot {
     }
     
     // Tuning Mode
-    if (leftStick.getSinglePress(TOGGLE_TUNING_MODE_BUTTON)) {
+    if (leftStick.getRawButtonPressed(TOGGLE_TUNING_MODE_BUTTON)) {
       tuningModeActive = !tuningModeActive;
       SmartDashboard.putBoolean("Tuning Mode Active", tuningModeActive);
       shooter.stop();
@@ -188,7 +187,7 @@ public class Robot extends TimedRobot {
     }
     
     // Shooter
-    if (leftStick.getSinglePress(TOGGLE_SHOOTER_CONTROL_BUTTON)) {
+    if (leftStick.getRawButtonPressed(TOGGLE_SHOOTER_CONTROL_BUTTON)) {
       shooter.stop();
       shooterControlMode = (shooterControlMode + 1) % 2;
     }
@@ -206,14 +205,14 @@ public class Robot extends TimedRobot {
     shooter.publishDataToSmartDash();
     
     // Cams (note that most img processing code is already called by shooter.fullAutoShooting())
-    if (rightStick.getSinglePress(TOGGLE_CAM_BUTTON)) {
+    if (rightStick.getRawButtonPressed(TOGGLE_CAM_BUTTON)) {
       camController.toggleCamStream();
     }
     imgProcessor.publishDataToSmartDash();
   }
   
   public void runTuningCode() {
-    if (leftStick.getSinglePress(CYCLE_THROUGH_TUNING_MODES_BUTTON)) {
+    if (leftStick.getRawButtonPressed(CYCLE_THROUGH_TUNING_MODES_BUTTON)) {
       tuningMode = (tuningMode + 1) % 4;
       shooter.stop();
     }
