@@ -14,8 +14,8 @@ import org.usfirst.frc.team1787.robot.subsystems.Winch;
 import org.usfirst.frc.team1787.robot.utils.CustomJoystick;
 import org.usfirst.frc.team1787.robot.vision.CameraController;
 import org.usfirst.frc.team1787.robot.vision.ImageProcessor;
-import edu.wpi.first.wpilibj.IterativeRobot;
 import edu.wpi.first.wpilibj.Preferences;
+import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -25,7 +25,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
  * creating this project, you must also update the manifest file in the resource
  * directory.
  */
-public class Robot extends IterativeRobot {
+public class Robot extends TimedRobot {
   // Don't Ask
   protected int farfar37;
   
@@ -83,7 +83,29 @@ public class Robot extends IterativeRobot {
    */
   @Override
   public void robotInit() {
-    
+	  // Default Period is 0.02 seconds per loop.
+	  this.setPeriod(DEFAULT_PERIOD);
+	  
+	  /*
+	   * TODO:
+	   * 1) Test new joystick methods for getting a single press.
+	   * 2) Test new joystick methods for getting specific axes
+	   * (custom joystick class may not be needed anymore)
+	   * 
+	   * 3) Update talons to new firmware version (I believe it's 3.3)
+	   * 4) finish going through all talon config features
+	   * 5) practice working with a sensor that's attatched to the talon
+	   * 6) figure out if it's possible to use a gyro with a talon / investigate Pidgeon IMU
+	   * 7) Test out using the follow feature with talons
+	   * 8) See what code structure would be like if you have the talons control pretty much everything
+	   * 
+	   * 9) Review multi-threading for img processing
+	   * 10) review img processing code and see if cleanup is necessary
+	   * 
+	   * 11) Figure out whats up with the new network tables protocols
+	   * 12) Finish setting up the dashboard so that all values show
+	   * 
+	   */
   }
 
   /**
