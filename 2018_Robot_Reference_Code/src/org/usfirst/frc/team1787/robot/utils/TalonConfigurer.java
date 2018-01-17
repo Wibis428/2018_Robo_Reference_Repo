@@ -1,9 +1,9 @@
 package org.usfirst.frc.team1787.robot.utils;
 
 import com.ctre.phoenix.motorcontrol.ControlFrame;
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
-import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 public class TalonConfigurer {
 	
@@ -19,7 +19,7 @@ public class TalonConfigurer {
    * 6) Enables voltage compensation mode, with a max voltage of 12 volts
    * @param talon the talon to configure.
    */
-  public static void configTalon(WPI_TalonSRX talon) {
+  public static void configTalon(TalonSRX talon) {
     System.out.println("Configuring TalonSRX #" + talon.getDeviceID());
     
     // can be set to true if positive values make the motor turn backwards
@@ -61,7 +61,7 @@ public class TalonConfigurer {
     // Processing Speed
     talon.setControlFramePeriod(ControlFrame.Control_3_General, 10);
      
-    talon.set(0);
+    talon.set(ControlMode.PercentOutput, 0);
   }
   
   /* Random Notes on WPI_TalonSRX */

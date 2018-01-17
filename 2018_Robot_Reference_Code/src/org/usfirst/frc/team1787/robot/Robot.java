@@ -35,7 +35,7 @@ public class Robot extends TimedRobot {
   private final int LEFT_JOYSTICK_ID = 1;
   private Joystick rightStick = new Joystick(RIGHT_JOYSTICK_ID);
   private Joystick leftStick = new Joystick(LEFT_JOYSTICK_ID);
-  private final int JOYSTICK_ROTATE_AXIS = 2;
+  private final int JOYSTICK_TWIST_AXIS = 2;
   private final int JOYSTICK_SLIDER_AXIS = 3;
   
   // Button Map
@@ -56,7 +56,7 @@ public class Robot extends TimedRobot {
   private final int TOGGLE_SHOOTER_CONTROL_BUTTON = 2;
   private final int TOGGLE_CAM_BUTTON = 10;
   
-  // Testing Mode Stuff
+  // Tuning Mode Stuff
   private boolean tuningModeActive = false;
   private final int TOGGLE_TUNING_MODE_BUTTON = 14;
   
@@ -97,6 +97,7 @@ public class Robot extends TimedRobot {
 	   * 6) figure out if it's possible to use a gyro with a talon / investigate Pidgeon IMU
 	   * 7) Test out using the follow feature with talons
 	   * 8) See what code structure would be like if you have the talons control pretty much everything
+	   * 9) actually use TalonConfigurer everywhere.
 	   * 
 	   * 9) Review multi-threading for img processing
 	   * 10) review img processing code and see if cleanup is necessary
