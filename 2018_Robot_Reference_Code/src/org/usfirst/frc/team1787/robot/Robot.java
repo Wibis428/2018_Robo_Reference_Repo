@@ -101,8 +101,11 @@ public class Robot extends TimedRobot {
 	   * 9) Review multi-threading for img processing
 	   * 10) review img processing code and see if cleanup is necessary
 	   * 
-	   * 11) Figure out whats up with the new network tables protocols
+	   * 11) Figure out what's up with the new network tables protocols
 	   * 12) Finish setting up the dashboard so that all values show
+	   * 13) try setting values from shuffleboard without using preferences object
+	   * 
+	   * 13) test out new camera toggle
 	   * 
 	   */
   }

@@ -5,10 +5,11 @@ import org.usfirst.frc.team1787.robot.utils.UnitConverter;
 
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
+import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoCamera.WhiteBalance;
+import edu.wpi.cscore.VideoSource;
 import edu.wpi.first.wpilibj.CameraServer;
-import edu.wpi.first.wpilibj.networktables.NetworkTable;
 
 public class CameraController {
   
@@ -139,9 +140,10 @@ public class CameraController {
   // as well as getting individual frames from a cam. See 2017 frc control system for more info.
   private CameraServer camServer = CameraServer.getInstance();
   private CvSink turretCamFrameGrabber;
-  private CvSource outputStream;
+  private CvSource imgProcessingOutputStream;
+  private MjpegServer driverOutputStream;
   // The max amount of time that the code will halt while waiting for an image from the turretCam.
-  private final double defaultTimeoutLengthSeconds = 3;
+  private final double defaultTimeoutLengthSeconds = 1;
   
   // image info
   public final int IMAGE_WIDTH_PIXELS = 160;
@@ -176,60 +178,44 @@ public class CameraController {
     turretCam = camServer.startAutomaticCapture("turretCam", 1);
     gearCam = camServer.startAutomaticCapture("gearCam", 0);
     // (gearCam id (0) and turretCam id (1) were empirically determined through testing)
-    // the names given are arbitrary.
     
     /* Configure settings like resolution, exposure, white balance, etc. */
     configCam(turretCam, true); // <- "true" indicates cam will be used for image processing
     configCam(gearCam, false);
     
-    // used to grab individual frames from turret cam for the ImageProcessor.
+    // create a MJPEG server that will be used for the camera stream on the driver's dashboard view.
+    driverOutputStream = camServer.addServer("Driver View");
+    driverOutputStream.setSource(gearCam);
+    
+    // used to grab individual frames from the turretCam for the ImageProcessor.
     turretCamFrameGrabber = camServer.getVideo(turretCam);
     // used to push processed frames to the dashboard for viewing.
-    outputStream = camServer.putVideo("OpenCV Stream", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
+    imgProcessingOutputStream = camServer.putVideo("OpenCV Stream", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
   }
   
   public void toggleCamStream() {
-    if (getStreamingCamName().equals(turretCam.getName())) {
-      setStreamingCam(gearCam.getName());
+    if (getDriverStreamActiveCam() == gearCam) {
+      setDriverStreamActiveCam(turretCam);
     } else {
-      setStreamingCam(turretCam.getName());
+      setDriverStreamActiveCam(gearCam);
     }
-    /* Note: The "Selected Camera Path" field 
-     * in the SmartDash widget must be set to
-     * "CameraPublisher/CurrentCam" for this
-     * method to work correctly.
-     */
-    
-    /* Unrelated Network Tables Note: 
-     * to get the default table, 
-     * just use "" as the key for getTable().
-     */
   }
   
   /**
    * Sets the streaming cam (i.e. the cam that's sending images to the smartdash)
-   * to be the the camera with the given name.
-   * @param camName The name of the camera who's stream you want to see.
+   * to be the the given camera
+   * @param cam The camera who's stream you want to see.
    */
-  public void setStreamingCam(String camName) {
-    /* per the 2017 FRC Control System Documentation:
-     * "If you're interested in just switching what the driver sees, 
-     * and are using SmartDashboard, the SmartDashboard CameraServer Stream Viewer 
-     * has an option ("Selected Camera Path") that reads the given NT key 
-     * and changes the "Camera Choice" to that value (displaying that camera). 
-     * The robot code then just needs to set the NT key to the correct camera name."
-     */
-    NetworkTable.getTable("CameraPublisher").putString("CurrentCam", camName);
+  public void setDriverStreamActiveCam(UsbCamera cam) {
+    driverOutputStream.setSource(cam);
   }
   
   /**
-   * @return The name of the camera currently
+   * @return The camera currently
    * sending images to the smartdash.
    */
-  public String getStreamingCamName() {
-    String errorMessage = "Couldn't find the value of the field \"CurrentCam\""
-                          + " in the network table \"CameraPublisher\".";
-    return NetworkTable.getTable("CameraPublisher").getString("CurrentCam", errorMessage);
+  public VideoSource getDriverStreamActiveCam() {
+    return driverOutputStream.getSource();
   }
   
   /**
@@ -299,7 +285,7 @@ public class CameraController {
    * @param img the frame to put on the dashboard.
    */
   public void pushFrameToDash(Mat img) {
-    outputStream.putFrame(img);
+    imgProcessingOutputStream.putFrame(img);
   }
   
   public static CameraController getInstance() {
