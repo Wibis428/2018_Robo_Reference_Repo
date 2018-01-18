@@ -104,7 +104,7 @@ public class DriveTrain {
   // Other Methods
 
   public void publishDataToSmartDash() {
-    SmartDashboard.putNumber("Average Speed (m/s)", getAvgSpeed());
+    SmartDashboard.putNumber("Average Speed (meters per second)", getAvgSpeed());
     
     if (gearShifter.get() == HIGH_GEAR) {
       SmartDashboard.putString("Current Gear", "High Gear");

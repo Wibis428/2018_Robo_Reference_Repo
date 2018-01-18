@@ -77,7 +77,7 @@ public class Robot extends TimedRobot {
   private Flywheel flywheel = Flywheel.getInstance();
   private Turret turret = Turret.getInstance();
   
-  // Preferences (used to get values from the smart dash)
+  // Preferences (Used to get values from the SmartDash)
   Preferences prefs = Preferences.getInstance();
   
   /**
@@ -131,14 +131,14 @@ public class Robot extends TimedRobot {
    * This function is run once upon entering teleop mode.
    */
   public void teleopInit() {
-    SmartDashboard.putBoolean("Tuning Mode Active", tuningModeActive);
+    
   }
 
   /**
    * This function is called periodically during operator control
    */
   @Override
-  public void teleopPeriodic() {	
+  public void teleopPeriodic() {
     // Driving
     if (rightStick.getMagnitude() > leftStick.getMagnitude()) {
       driveTrain.arcadeDrive(rightStick.getY(), rightStick.getX());
@@ -181,9 +181,9 @@ public class Robot extends TimedRobot {
     // Tuning Mode
     if (leftStick.getRawButtonPressed(TOGGLE_TUNING_MODE_BUTTON)) {
       tuningModeActive = !tuningModeActive;
-      SmartDashboard.putBoolean("Tuning Mode Active", tuningModeActive);
       shooter.stop();
     }
+    SmartDashboard.putBoolean("Tuning Mode Active", tuningModeActive);
     
     if (tuningModeActive) {
       runTuningCode();
@@ -212,10 +212,14 @@ public class Robot extends TimedRobot {
     if (rightStick.getRawButtonPressed(TOGGLE_CAM_BUTTON)) {
       camController.toggleCamStream();
     }
+    camController.publishDriverView();
     imgProcessor.publishDataToSmartDash();
   }
   
   public void runTuningCode() {
+    /* Note: To have preferences show up in the appropriate shuffleboard widget, 
+     * they must 1st be added to network tables through Outline Viewer
+     */
     if (leftStick.getRawButtonPressed(CYCLE_THROUGH_TUNING_MODES_BUTTON)) {
       tuningMode = (tuningMode + 1) % 4;
       shooter.stop();
@@ -223,7 +227,7 @@ public class Robot extends TimedRobot {
     
     if (tuningMode == 0) {
       // Tuning Mode 0 = Turret PID Testing
-      if (!shooter.pidIsEnabled()) {
+      if (!shooter.pidIsEnabled()) {  
         double turretP = prefs.getDouble("turretP", 0);
         double turretI = prefs.getDouble("turretI", 0);
         double turretD = prefs.getDouble("turretD", 0);

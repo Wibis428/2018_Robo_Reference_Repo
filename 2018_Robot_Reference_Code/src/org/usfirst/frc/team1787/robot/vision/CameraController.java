@@ -135,13 +135,17 @@ public class CameraController {
   // UsbCamera objects are mainly used to config camera settings (resolution, exposure time, etc.)
   private UsbCamera gearCam;
   private UsbCamera turretCam;
+  private UsbCamera currentCam;
+  Mat currFrame = new Mat();
   
   // these objects handle all the networking associated with the cameras,
   // as well as getting individual frames from a cam. See 2017 frc control system for more info.
   private CameraServer camServer = CameraServer.getInstance();
   private CvSink turretCamFrameGrabber;
   private CvSource imgProcessingOutputStream;
-  private MjpegServer driverOutputStream;
+  
+  private CvSink gearCamFrameGrabber;
+  private CvSource driverViewOutputStream;
   // The max amount of time that the code will halt while waiting for an image from the turretCam.
   private final double defaultTimeoutLengthSeconds = 1;
   
@@ -183,9 +187,9 @@ public class CameraController {
     configCam(turretCam, true); // <- "true" indicates cam will be used for image processing
     configCam(gearCam, false);
     
-    // create a MJPEG server that will be used for the camera stream on the driver's dashboard view.
-    driverOutputStream = camServer.addServer("Driver View");
-    driverOutputStream.setSource(gearCam);
+    gearCamFrameGrabber = camServer.getVideo(gearCam);
+    driverViewOutputStream = camServer.putVideo("Driver View", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
+    currentCam = gearCam;
     
     // used to grab individual frames from the turretCam for the ImageProcessor.
     turretCamFrameGrabber = camServer.getVideo(turretCam);
@@ -207,15 +211,24 @@ public class CameraController {
    * @param cam The camera who's stream you want to see.
    */
   public void setDriverStreamActiveCam(UsbCamera cam) {
-    driverOutputStream.setSource(cam);
+	  currentCam = cam;
+  }
+  
+  public void publishDriverView() {
+	  if (currentCam == gearCam) {
+		  gearCamFrameGrabber.grabFrame(currFrame);
+	  } else if (currentCam == turretCam) {
+		  turretCamFrameGrabber.grabFrame(currFrame);
+	  }
+	  driverViewOutputStream.putFrame(currFrame);
   }
   
   /**
    * @return The camera currently
    * sending images to the smartdash.
    */
-  public VideoSource getDriverStreamActiveCam() {
-    return driverOutputStream.getSource();
+  public UsbCamera getDriverStreamActiveCam() {
+	  return currentCam;
   }
   
   /**
