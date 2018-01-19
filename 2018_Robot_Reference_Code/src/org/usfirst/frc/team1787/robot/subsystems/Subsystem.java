@@ -14,14 +14,14 @@ import org.usfirst.frc.team1787.robot.utils.CustomPIDController;
  * In order to control the arm, you want a way to be able to manipulate it's state. This corresponds to setters in your classes.
  * What is the "state" of a mechanism? It's just a set of numbers that describe the configuration of the mechanism 
  * 
- * The methods you should have include:
+ * The methods you should probably have include:
  * 1) setters for each of the components that have state.
  *  -consider making frequent use cases their own method to improve clarity and maintain clean code!!!
  *  -includes manual control (make controls make sense and feel intutitive!)
  *  -includes sensor resetting
  * 2) getters for each of the components that have state.
  *  -reading data from sensors
- *  -reading data from PIDControllers?
+ *  -reading data from PIDControllers
  * 3) a safe stop method
  * 4) a singleton instance getter
  * @author Simon

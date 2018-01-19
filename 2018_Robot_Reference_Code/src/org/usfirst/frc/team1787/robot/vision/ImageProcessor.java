@@ -70,6 +70,8 @@ public class ImageProcessor {
     MatOfPoint bestCandidate = getStrongestCandidate(contours);
     currentTarget = new Target(bestCandidate);
     
+    
+    
     // if a valid target is found, it will be drawn on the orgininalFrame in green
     if (currentTarget.getHorizontalDistance() > 0) {
       Rect box = Imgproc.boundingRect(bestCandidate);
@@ -78,9 +80,6 @@ public class ImageProcessor {
       Point centroid = this.getContourCenter(bestCandidate);
       drawPoint(centroid, originalFrame, COLOR_GREEN);
     }
-    
-    // Push the original frame to the smartdash
-    camController.pushFrameToDash(originalFrame);
   }
   
   
@@ -236,7 +235,7 @@ public class ImageProcessor {
    * Mat that is a member of the ImageProcessor.
    */
   public Mat getHSVFilter(Scalar lowerBounds, Scalar upperBounds) {
-    camController.getFrame(originalFrame);
+    camController.getTurretCamFrame(originalFrame);
     
     // Images directly from the turretCam are in BGR format, so they 
     // need to be converted to HSV format before the HSV filter is applied
@@ -314,6 +313,14 @@ public class ImageProcessor {
   
   public Target getCurrentTarget() {
     return currentTarget;
+  }
+  
+  public Mat getOriginalFrame() {
+	return originalFrame;
+  }
+  
+  public Mat getProcessedFrame() {
+	return processedFrame;
   }
   
   public static ImageProcessor getInstance() {

@@ -45,25 +45,30 @@ public class Robot extends TimedRobot {
   private final int EXPELL_BUTTON = 2;
   
   private final int WINCH_CLIMB_BUTTON = 8;
-  //private final int WINCH_DESCEND_BUTTON = 7;
-  /* The ratchet on the winch motor prevents the winch from rotating in the opposite direction,
-   * so the WINCH_DESCEND_BUTTON is never actually being used. However, it's value remains
-   * here for if we ever decide to remove the ratchet. */
-  
-  // keeps track of the current "mode" of the shooter
-  // current options include mode 0 (manual control), and mode 1 (full auto shooting)
-  private int shooterControlMode = 0;
+
   private final int TOGGLE_SHOOTER_CONTROL_BUTTON = 2;
-  private final int TOGGLE_CAM_BUTTON = 10;
   
-  // Tuning Mode Stuff
-  private boolean tuningModeActive = false;
-  private final int TOGGLE_TUNING_MODE_BUTTON = 14;
+  private final int TOGGLE_ACTIVE_CAMERA_BUTTON = 10;
   
-  // if tuning mode is active, this variable determines what
-  // exactly is being tuned
+  private final int TOGGLE_TUNING_MODE_ENABLED_BUTTON = 14;
+  private final int CHANGE_CURRENT_TUNING_MODE_BUTTON = 15;
+  
+  // Control State Variables
+  
+  /** Determines which mode the shooter is in.
+   * 0 = manual control,
+   * 1 = automatic target tracking & shooting */
+  private int shooterControlMode = 0;
+  
+  /** If tuning mode is active, this variable 
+   * determines what exactly is being tuned */
   private int tuningMode = 0;
-  private final int CYCLE_THROUGH_TUNING_MODES_BUTTON = 15;
+  private boolean tuningModeActive = false;
+  
+  // the frame published to the SmartDash stream
+  private Mat outputFrame = new Mat();
+  // where to get the image to publish to the SmartDash
+  private int selectedStreamingSource = 0;
   
   // Instances of Subsystems
   private DriveTrain driveTrain = DriveTrain.getInstance();
@@ -73,17 +78,21 @@ public class Robot extends TimedRobot {
   private CameraController camController = CameraController.getInstance();
   private ImageProcessor imgProcessor = ImageProcessor.getInstance();
   
-  // These are only used for tuning
+  /* These subsystems are normally controlled collectively through the Shooter class,
+   * but they are included here individually to tune PID loops for each component
+   * separately. */
   private Flywheel flywheel = Flywheel.getInstance();
   private Turret turret = Turret.getInstance();
   
-  // Preferences (Used to get values from the SmartDash)
+  // Preferences (interface used to get values from the SmartDash)
   Preferences prefs = Preferences.getInstance();
   
-  /**
-   * This function is run when the robot is first started up and should be used
-   * for any initialization code.
-   */
+  /* ----------------------------------------------------------------
+   * Member variables end here; only functions below this point!
+   * ---------------------------------------------------------------- */
+  
+  /** This function is run once when the robot is first started up
+   *  and should be used  for any initialization code. */
   @Override
   public void robotInit() {
 	  // Default Period is 0.02 seconds per loop.
@@ -91,7 +100,6 @@ public class Robot extends TimedRobot {
 	  
 	  /*
 	   * TODO:
-	   * 3) Update talons to new firmware version (I believe it's 3.3)
 	   * 4) finish going through all talon config features
 	   * 5) practice working with a sensor that's attatched to the talon
 	   * 6) figure out if it's possible to use a gyro with a talon / investigate Pidgeon IMU
@@ -101,53 +109,37 @@ public class Robot extends TimedRobot {
 	   * 
 	   * 9) Review multi-threading for img processing
 	   * 10) review img processing code and see if cleanup is necessary
-	   * 10.5) Possibly reduce total extra streams to 1.
 	   * 
-	   * 11) Figure out what's up with the new network tables protocols
+	   * 11) Review what's up with the new network tables protocols
 	   * 12) Finish setting up the dashboard so that all values show
-	   * 13) try setting values from shuffleboard without using preferences object
-	   * 
-	   * 13) test out new camera toggle
-	   * 
 	   */
   }
-
-  /**
-   * This function is run once upon entering autonomous.
+  
+  /* While the robot is on, it can be in one of the following modes at a time:
+   * 1) teleop (driver control from driver station)
+   * 2) autonomous (no driver control, fully autonomous)
+   * 3) test mode (intended to be helpful for testing, but I find it annoying)
+   * 4) disabled (robot does nothing)
+   * 
+   * Each of these modes have an associated init() function
+   * and an associated periodic() function. The init() function is
+   * run once upon entering a given mode, then the periodic() function is looped
+   * until a different mode is entered.
+   * 
+   * For example: Changing the current mode from 
+   * disabled to teleop will cause teleopInit() to be run once, and then teleopPeriodic()
+   * to be looped until a different mode is entered.
    */
-  @Override
-  public void autonomousInit() {
-    
-  }
-
-  /**
-   * This function is called periodically during autonomous
-   */
-  @Override
-  public void autonomousPeriodic() {
-    
-  }
-
-  /**
-   * This function is run once upon entering teleop mode.
-   */
+  
+  
+  
   public void teleopInit() {
     
   }
 
-  /**
-   * This function is called periodically during operator control
-   */
-  @Override
   public void teleopPeriodic() {
     // Driving
-    if (rightStick.getMagnitude() > leftStick.getMagnitude()) {
-      //driveTrain.arcadeDrive(rightStick.getY(), rightStick.getX());
-    	driveTrain.otherArcadeDrive(-rightStick.getY(), rightStick.getX());
-    } else {
-      /* Use of the left stick is currently reserved for the shooter. */
-      //driveTrain.arcadeDrive(-1*rightStick.getY(), rightStick.getX());
-    }
+    driveTrain.arcadeDrive(-rightStick.getY(), rightStick.getX());
     
     // Gear Shifter
     if (rightStick.getRawAxis(JOYSTICK_SLIDER_AXIS) < 0) {
@@ -155,6 +147,7 @@ public class Robot extends TimedRobot {
     } else {
       driveTrain.setGear(driveTrain.LOW_GEAR);
     }
+    
     driveTrain.publishDataToSmartDash();
     
     // Pickup Arm
@@ -177,11 +170,11 @@ public class Robot extends TimedRobot {
     if (rightStick.getRawButton(WINCH_CLIMB_BUTTON)) {
       winch.spin(winch.DEFAULT_CLIMB_SPEED);
     } else {
-      winch.stop();
+      winch.spin(0);
     }
     
     // Tuning Mode
-    if (leftStick.getRawButtonPressed(TOGGLE_TUNING_MODE_BUTTON)) {
+    if (leftStick.getRawButtonPressed(TOGGLE_TUNING_MODE_ENABLED_BUTTON)) {
       tuningModeActive = !tuningModeActive;
       shooter.stop();
     }
@@ -198,66 +191,110 @@ public class Robot extends TimedRobot {
       shooterControlMode = (shooterControlMode + 1) % 2;
     }
     
-    if (shooterControlMode == 0) {
-      // Shooter Mode 0 = Manual Control
+    /* shooterControlMode = 0 = manual control
+     * shooterControlMode = 1 = full auto tracking/shooting */
+    if (shooterControlMode == 0) {   
       shooter.manualControl(leftStick);
-    } else if (shooterControlMode == 1) {
-      // Shooter Mode 1 = Full Auto Shooting
+    } else if (shooterControlMode == 1) {      
       if (!shooter.pidIsEnabled()) {
         shooter.enablePIDControllers();
       }
       shooter.fullAutoShooting();
     }
+    
     shooter.publishDataToSmartDash();
     
-    // Cams (note that most img processing code is already called by shooter.fullAutoShooting())
-    if (rightStick.getRawButtonPressed(TOGGLE_CAM_BUTTON)) {
-      camController.toggleCamStream();
+    // Cameras (note that most img processing code is already called by shooter.fullAutoShooting())
+    if (rightStick.getRawButtonPressed(TOGGLE_ACTIVE_CAMERA_BUTTON)) {
+      selectedStreamingSource = (selectedStreamingSource + 1) % 4;
     }
-    camController.publishDriverView();
+    
+    if (selectedStreamingSource == 0) {
+      camController.getGearCamFrame(outputFrame);
+    } else if (selectedStreamingSource == 1) {
+      camController.getTurretCamFrame(outputFrame);
+    } else if (selectedStreamingSource == 2) {
+      outputFrame = imgProcessor.getOriginalFrame();
+    } else if (selectedStreamingSource == 3) {
+      outputFrame = imgProcessor.getProcessedFrame();
+    }
+    camController.pushFrameToDash(outputFrame);
+    
     imgProcessor.publishDataToSmartDash();
   }
   
+  
+  
+  
+  
+  public void autonomousInit() {
+	    
+  }
+
+  public void autonomousPeriodic() {
+    
+  }
+  
+  
+  
+  
+  public void disabledInit() {
+    shooter.stop();
+  }
+	  
+  public void disabledPeriodic() {
+		  
+  }
+  
+  
+  
+  
+  
   public void runTuningCode() {
     /* Note: To have preferences show up in the appropriate shuffleboard widget, 
-     * they must 1st be added to network tables through Outline Viewer
-     */
-    if (leftStick.getRawButtonPressed(CYCLE_THROUGH_TUNING_MODES_BUTTON)) {
-      tuningMode = (tuningMode + 1) % 4;
+     * they must first be added to network tables through Outline Viewer */
+    
+    if (leftStick.getRawButtonPressed(CHANGE_CURRENT_TUNING_MODE_BUTTON)) {
       shooter.stop();
+      tuningMode = (tuningMode + 1) % 4;
     }
     
+    /* tuningMode = 0 = turret PID tuning
+     * tuningMode = 1 = flywheel PID tuning
+     * tuningMode = 2 = HSV filter tuning
+     * tuningMode = 3 = contour filter tuning */
     if (tuningMode == 0) {
-      // Tuning Mode 0 = Turret PID Testing
       if (!shooter.pidIsEnabled()) {  
         double turretP = prefs.getDouble("turretP", 0);
         double turretI = prefs.getDouble("turretI", 0);
         double turretD = prefs.getDouble("turretD", 0);
         turret.getPIDController().setPID(turretP, turretI, turretD);
         
-        double turretTolerance = prefs.getDouble("turretDegreesTolerance", 0);
-        turret.getPIDController().setAbsoluteTolerance(turretTolerance);
+        // turret error is in [degrees]
+        double turretErrorTolerance = prefs.getDouble("turretErrorTolerance", 0);
+        turret.getPIDController().setAbsoluteTolerance(turretErrorTolerance);
         
         turret.getPIDController().enable();
       }
       shooter.trackTarget();
+      
     } else if (tuningMode == 1) {
-      // Tuning Mode 1 = Flywheel PID Testing
       if (!shooter.pidIsEnabled()) {
         double flywheelP = prefs.getDouble("flywheelP", 0);
         double flywheelI = prefs.getDouble("flywheelI", 0);
         double flywheelD = prefs.getDouble("flywheelD", 0);
         flywheel.getPIDController().setPID(flywheelP, flywheelI, flywheelD);
         
-        double flywheelTolerance = prefs.getDouble("flywheelRPSTolerance", 0);
-        flywheel.getPIDController().setAbsoluteTolerance(flywheelTolerance);
+        // flywheel error is in [revolutions/second]
+        double flywheelErrorTolerance = prefs.getDouble("flywheelErrorTolerance", 0);
+        flywheel.getPIDController().setAbsoluteTolerance(flywheelErrorTolerance);
         
         flywheel.getPIDController().enable();
       }
       double flywheelSetpoint = prefs.getDouble("flywheelSetpoint", 0);
       flywheel.getPIDController().setSetpoint(flywheelSetpoint);
+      
     } else if (tuningMode == 2) {
-      // Tuning Mode 2 = HSV Filter Testing
       shooter.manualControl(leftStick);
       
       double hMin = prefs.getDouble("hMin", 0);
@@ -272,8 +309,8 @@ public class Robot extends TimedRobot {
       
       Mat result = imgProcessor.getHSVFilter(minRange, maxRange);
       camController.pushFrameToDash(result);
+      
     } else if (tuningMode == 3) {
-      // Tuning Mode 3 = Contour Filter Testing
       shooter.manualControl(leftStick);
       
       double minArea = prefs.getDouble("minArea", 0);
@@ -286,9 +323,9 @@ public class Robot extends TimedRobot {
       
       ArrayList<MatOfPoint> contours = imgProcessor.findContours(result);
       for (int i = contours.size()-1; i >= 0; i--) {
-        boolean test1 = imgProcessor.passesAreaTest(contours.get(i), minArea);
-        boolean test2 = imgProcessor.passesShapeTest(contours.get(i), minShapeScore, maxShapeScore);
-        if (!(test1 && test2)) {
+        boolean passesAreaTest = imgProcessor.passesAreaTest(contours.get(i), minArea);
+        boolean passesShapeTest = imgProcessor.passesShapeTest(contours.get(i), minShapeScore, maxShapeScore);
+        if (!(passesAreaTest && passesShapeTest)) {
           contours.remove(i);
         }
       }
@@ -301,22 +338,15 @@ public class Robot extends TimedRobot {
     shooter.publishDataToSmartDash();
     imgProcessor.publishDataToSmartDash();
   }
-
-  /**
-   * This function is called once upon entering "disabled" mode.
-   */
-  public void disabledInit() {
-    shooter.stop();
-  }
+  
+  
+  
+  
   
   public void testInit() {
     
   }
 
-  /**
-   * This function is called periodically during test mode
-   */
-  @Override
   public void testPeriodic() {
     
   }

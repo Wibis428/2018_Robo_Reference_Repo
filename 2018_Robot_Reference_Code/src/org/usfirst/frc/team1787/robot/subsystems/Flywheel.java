@@ -14,29 +14,27 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 public class Flywheel {
   
   // Talon
-  private final int TURRET_FLYWHEEL_TALON_ID = 5;
-  private WPI_TalonSRX flywheelMotor = new WPI_TalonSRX(TURRET_FLYWHEEL_TALON_ID);
+  private final int FLYWHEEL_TALON_ID = 5;
+  private WPI_TalonSRX flywheelMotor = new WPI_TalonSRX(FLYWHEEL_TALON_ID);
   
-  // Encoder Constants
-  private final int FLYWHEEL_ENCODER_A_CHANNEL = 6;
-  private final int FLYWHEEL_ENCODER_B_CHANNEL = 7;
-  // 2048 encoder ticks per encoder revolution, and the encoder is mounted on the same axle as the flywheel
+  // Encoder
+  private final int ENCODER_A_CHANNEL = 6;
+  private final int ENCODER_B_CHANNEL = 7;
+  private Encoder flywheelEncoder = new Encoder(ENCODER_A_CHANNEL, ENCODER_B_CHANNEL);
+  
+  //2048 encoder ticks per encoder revolution, and the encoder is mounted on the same axle as the flywheel
   private final double FLYWHEEL_ENCODER_REVOLUTIONS_PER_PULSE = 1.0 / 2048;
-  private Encoder flywheelEncoder = new Encoder(FLYWHEEL_ENCODER_A_CHANNEL, FLYWHEEL_ENCODER_B_CHANNEL);
 
   // PID Control Loop Gains / Preferences
-  private final double FLYWHEEL_PID_CONTROLLER_KP = 0;
-  private final double FLYWHEEL_PID_CONTROLLER_KI = 0;
-  private final double FLYWHEEL_PID_CONTROLLER_KD = 0;
-  private final double FLYWHEEL_PID_ABSOLUTE_TOLERENCE_IN_REVOLUTIONS_PER_SECOND = 0;
-  private CustomPIDController flywheelController = new CustomPIDController(FLYWHEEL_PID_CONTROLLER_KP, 
-                                                               FLYWHEEL_PID_CONTROLLER_KI, 
-                                                               FLYWHEEL_PID_CONTROLLER_KD,
-                                                               1.0/80, flywheelEncoder, flywheelMotor, 
-                                                               PIDController.kDefaultPeriod);
+  private final double PID_KP = 0;
+  private final double PID_KI = 0;
+  private final double PID_KD = 0;
+  private final double PID_KF = 1.0 / 80; // (max setpoint is 80 revolutions / second)
+  private final double PID_ERROR_TOLERANCE = 0;
+  private CustomPIDController flywheelController = new CustomPIDController(PID_KP, PID_KI, PID_KD, PID_KF,
+		  										   flywheelEncoder, flywheelMotor, PIDController.kDefaultPeriod);
 
-  // Geometric Constants (in meters)
-  // 4.875 inch flywheel diameter
+  // Flywheel Geometry (in meters) (note that flywheel has 4.875 inch diameter)
   private final double FLYWHEEL_RADIUS = UnitConverter.inchesToMeters(4.875/2.0);
   private final double FLYWHEEL_CIRCUMFERENCE = 2 * Math.PI * FLYWHEEL_RADIUS;
   private final double EXIT_ANGLE_DEGREES = 1;
@@ -55,7 +53,7 @@ public class Flywheel {
     flywheelEncoder.setReverseDirection(true);
     
     // Configure PID Controller
-    flywheelController.setAbsoluteTolerance(FLYWHEEL_PID_ABSOLUTE_TOLERENCE_IN_REVOLUTIONS_PER_SECOND);
+    flywheelController.setAbsoluteTolerance(PID_ERROR_TOLERANCE);
   }
   
   // PID Controller Methods

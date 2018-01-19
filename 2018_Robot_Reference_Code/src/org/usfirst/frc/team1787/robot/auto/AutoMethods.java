@@ -17,7 +17,7 @@ public class AutoMethods {
     SmartDashboard.putData("Auto Chooser", autoChooser);
   }
 
-  public void getSelectedAutoRoutine() {
+  public void updateSelectedAutoRoutine() {
     selectedAuto = autoChooser.getSelected();
   }
 

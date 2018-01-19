@@ -6,14 +6,15 @@ public class Feeder {
   
   // Talons
   private final int TURRET_FEEDER_TALON_ID = 2;
-  public final double DEFAULT_FEEDER_SPEED = 0.42;
   private WPI_TalonSRX feederMotor = new WPI_TalonSRX(TURRET_FEEDER_TALON_ID);
+  
+  public final double DEFAULT_FEEDER_SPEED = 0.42;
   
   // Singleton Instance
   private static final Feeder instance = new Feeder();
 
   private Feeder() {
-    // Intentionally left blank. No initialization code required.
+	feederMotor.setInverted(true);
   }
   
   /**
@@ -21,7 +22,7 @@ public class Feeder {
    * in the correct direction, negative values to run it in reverse.
    */
   public void spin(double moveValue) {
-    feederMotor.set(-1 * moveValue);
+    feederMotor.set(moveValue);
     // feeder is mounted such that positive move values will
     // actually make it spin the wrong way, so the input is
     // multiplied by -1 to get the desired behavior in the 

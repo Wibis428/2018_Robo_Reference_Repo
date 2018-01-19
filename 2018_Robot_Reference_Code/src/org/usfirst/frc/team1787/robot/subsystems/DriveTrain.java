@@ -6,13 +6,11 @@ import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.SpeedControllerGroup;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveTrain {
   
-  // Driving Talons
+  // Talons
   private final int FRONT_RIGHT_TALON_ID = 8;
   private final int REAR_RIGHT_TALON_ID = 9;
   private final int FRONT_LEFT_TALON_ID = 6;
@@ -27,18 +25,20 @@ public class DriveTrain {
   private final int LEFT_ENCODER_B_CHANNEL = 3;
   private final int RIGHT_ENCODER_A_CHANNEL = 0;
   private final int RIGHT_ENCODER_B_CHANNEL =1;
-  // determined through testing
-  private final double METERS_PER_PULSE = UnitConverter.inchesToMeters(0.01249846);
   private Encoder leftEncoder = new Encoder(LEFT_ENCODER_A_CHANNEL, LEFT_ENCODER_B_CHANNEL);
   private Encoder rightEncoder = new Encoder(RIGHT_ENCODER_A_CHANNEL, RIGHT_ENCODER_B_CHANNEL);
+  
+  // determined through testing
+  private final double METERS_PER_PULSE = UnitConverter.inchesToMeters(0.01249846);
 
   // Gear Shifter (pneumatic shifter controlled by a solenoid)
   private final int SOLENOID_ID = 0;
+  private Solenoid gearShifter = new Solenoid(SOLENOID_ID);
+  
   /* The boolean value that corresponds to each gear was determined through testing.
    * These booleans indicate the correct value to use when calling "solenoid.set()". */
   public final boolean HIGH_GEAR = false;
   public final boolean LOW_GEAR = true;
-  private Solenoid gearShifter = new Solenoid(SOLENOID_ID);
   
   // Singleton Instance
   private static final DriveTrain instance = new DriveTrain();
@@ -53,17 +53,13 @@ public class DriveTrain {
   
   // Drive Train Related Methods
   
-  public void arcadeDrive(double moveValue, double rotateValue) {
-    //driveController.arcadeDrive(moveValue, -rotateValue);
-  }
-  
   /**
    * y value influences linear motion, 
    * x value influences rate of rotation
    * @param y
    * @param x
    */
-  public void otherArcadeDrive(double y, double x) {
+  public void arcadeDrive(double y, double x) {
 	  // use Math.abs() to preserve sign while squaring inputs
 	  y = y * Math.abs(y);
 	  x = x * Math.abs(x);	  
@@ -72,22 +68,13 @@ public class DriveTrain {
 	  double rightOutput = y - x;
 	  
 	  // limit outputs to [-1, 1]
-	  if (leftOutput > 1) {
-		  leftOutput = 1;
-	  } else if (leftOutput < -1) {
-		  leftOutput = -1;
-	  }
+	  leftOutput = Math.max(-1, Math.min(leftOutput, 1));
+	  rightOutput = Math.max(-1, Math.min(rightOutput, 1));
 	  
-	  if (rightOutput > 1) {
-		  rightOutput = 1;
-	  } else if (rightOutput < -1) {
-		  rightOutput = -1;
-	  }
-	  
-	  setLeftRightMotorOutputs(leftOutput, rightOutput);
+	  setDriveOutputs(leftOutput, rightOutput);
   }
   
-  public void setLeftRightMotorOutputs(double leftOutput, double rightOutput) {
+  public void setDriveOutputs(double leftOutput, double rightOutput) {
 	  frontLeftMotor.set(leftOutput);
 	  rearLeftMotor.set(leftOutput);
 	  
@@ -96,7 +83,7 @@ public class DriveTrain {
   }
   
   public void stop() {
-    setLeftRightMotorOutputs(0, 0);
+    setDriveOutputs(0, 0);
   }
   
   // Gear Shifter Related Methods
@@ -131,14 +118,14 @@ public class DriveTrain {
     return rightEncoder;
   }
   
-  public double getAvgSpeed() {
+  public double getAvgVelocity() {
     return (leftEncoder.getRate() + rightEncoder.getRate()) / 2.0;
   }
   
   // Other Methods
 
   public void publishDataToSmartDash() {
-    SmartDashboard.putNumber("Average Speed (meters per second)", getAvgSpeed());
+    SmartDashboard.putNumber("Average Velocity (meters per second)", getAvgVelocity());
     
     if (gearShifter.get() == HIGH_GEAR) {
       SmartDashboard.putString("Current Gear", "High Gear");

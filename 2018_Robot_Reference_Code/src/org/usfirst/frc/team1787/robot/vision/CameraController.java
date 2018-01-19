@@ -5,10 +5,8 @@ import org.usfirst.frc.team1787.robot.utils.UnitConverter;
 
 import edu.wpi.cscore.CvSink;
 import edu.wpi.cscore.CvSource;
-import edu.wpi.cscore.MjpegServer;
 import edu.wpi.cscore.UsbCamera;
 import edu.wpi.cscore.VideoCamera.WhiteBalance;
-import edu.wpi.cscore.VideoSource;
 import edu.wpi.first.wpilibj.CameraServer;
 
 public class CameraController {
@@ -135,18 +133,16 @@ public class CameraController {
   // UsbCamera objects are mainly used to config camera settings (resolution, exposure time, etc.)
   private UsbCamera gearCam;
   private UsbCamera turretCam;
-  private UsbCamera currentCam;
-  Mat currFrame = new Mat();
   
   // these objects handle all the networking associated with the cameras,
-  // as well as getting individual frames from a cam. See 2017 frc control system for more info.
+  // as well as getting individual frames from a cam. See 2018 frc control system for more info.
   private CameraServer camServer = CameraServer.getInstance();
   private CvSink turretCamFrameGrabber;
-  private CvSource imgProcessingOutputStream;
-  
   private CvSink gearCamFrameGrabber;
-  private CvSource driverViewOutputStream;
-  // The max amount of time that the code will halt while waiting for an image from the turretCam.
+  private CvSource outputStream;
+  
+  // The max amount of time that the code will halt while waiting to get a single frame 
+  // from a camera from that camera's respective frameGrabber
   private final double defaultTimeoutLengthSeconds = 1;
   
   // image info
@@ -178,57 +174,55 @@ public class CameraController {
      */
     
     /* Initializes each camera, and links each camera to it's own Mjpeg Server
-     * which automatically pushes regular (non-processed) images to the SmartDash */
+     * which automatically pushes regular (non-processed) images to the SmartDash 
+     * (note: gearCam id (0) and turretCam id (1) were empirically determined through testing) */
     turretCam = camServer.startAutomaticCapture("turretCam", 1);
     gearCam = camServer.startAutomaticCapture("gearCam", 0);
-    // (gearCam id (0) and turretCam id (1) were empirically determined through testing)
     
     /* Configure settings like resolution, exposure, white balance, etc. */
     configCam(turretCam, true); // <- "true" indicates cam will be used for image processing
     configCam(gearCam, false);
     
-    gearCamFrameGrabber = camServer.getVideo(gearCam);
-    driverViewOutputStream = camServer.putVideo("Driver View", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
-    currentCam = gearCam;
-    
-    // used to grab individual frames from the turretCam for the ImageProcessor.
+    // used to grab individual frames from each cam.
     turretCamFrameGrabber = camServer.getVideo(turretCam);
+    gearCamFrameGrabber = camServer.getVideo(gearCam);
+    
     // used to push processed frames to the dashboard for viewing.
-    imgProcessingOutputStream = camServer.putVideo("OpenCV Stream", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
-  }
-  
-  public void toggleCamStream() {
-    if (getDriverStreamActiveCam() == gearCam) {
-      setDriverStreamActiveCam(turretCam);
-    } else {
-      setDriverStreamActiveCam(gearCam);
-    }
+    outputStream = camServer.putVideo("Custom Camera Stream", IMAGE_WIDTH_PIXELS, IMAGE_HEIGHT_PIXELS);
   }
   
   /**
-   * Sets the streaming cam (i.e. the cam that's sending images to the smartdash)
-   * to be the the given camera
-   * @param cam The camera who's stream you want to see.
+   * Gets the most recent frame from the turretCam, 
+   * and stores it in the given Mat object.
+   * @param destination The OpenCv Mat to 
+   * store the image in.
+   * @return The timestamp of the frame.
    */
-  public void setDriverStreamActiveCam(UsbCamera cam) {
-	  currentCam = cam;
-  }
-  
-  public void publishDriverView() {
-	  if (currentCam == gearCam) {
-		  gearCamFrameGrabber.grabFrame(currFrame);
-	  } else if (currentCam == turretCam) {
-		  turretCamFrameGrabber.grabFrame(currFrame);
-	  }
-	  driverViewOutputStream.putFrame(currFrame);
+  public long getTurretCamFrame(Mat destination) {
+    return turretCamFrameGrabber.grabFrame(destination, defaultTimeoutLengthSeconds);
   }
   
   /**
-   * @return The camera currently
-   * sending images to the smartdash.
+   * Gets the most recent frame from the gearCam, 
+   * and stores it in the given Mat object.
+   * @param destination The OpenCv Mat to 
+   * store the image in.
+   * @return The timestamp of the frame.
    */
-  public UsbCamera getDriverStreamActiveCam() {
-	  return currentCam;
+  public long getGearCamFrame(Mat destination) {
+    return gearCamFrameGrabber.grabFrame(destination, defaultTimeoutLengthSeconds);
+  }
+  
+  /**
+   * Pushes the given frame to the dashboard
+   * on the stream called "Custom Output Stream".
+   * You will have to select "Custom Output Stream" on the
+   * smart dashboard widget to see this.
+   * 
+   * @param img the frame to put on the dashboard.
+   */
+  public void pushFrameToDash(Mat img) {
+    outputStream.putFrame(img);
   }
   
   /**
@@ -276,29 +270,6 @@ public class CameraController {
     double numerator = numOfPixels / 2.0;
     double denominator = Math.tan(Math.toRadians(fov/2.0));
     return (denominator == 0) ? 1 : (numerator / denominator);
-  }
-  
-  /**
-   * Gets the most recent frame from the turretCam, 
-   * and stores it in the given Mat object.
-   * @param destination The OpenCv Mat to 
-   * store the image in.
-   * @return The timestamp of the frame.
-   */
-  public long getFrame(Mat destination) {
-    return turretCamFrameGrabber.grabFrame(destination, defaultTimeoutLengthSeconds);
-  }
-  
-  /**
-   * Pushes the given frame to the dashboard
-   * on the stream called "OpenCV Stream".
-   * You will have to select "OpenCV Stream" on the
-   * smart dashboard widget to see this.
-   * 
-   * @param img the frame to put on the dashboard.
-   */
-  public void pushFrameToDash(Mat img) {
-    imgProcessingOutputStream.putFrame(img);
   }
   
   public static CameraController getInstance() {

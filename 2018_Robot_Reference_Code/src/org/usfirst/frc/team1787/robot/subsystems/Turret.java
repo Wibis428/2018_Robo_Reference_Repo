@@ -15,26 +15,25 @@ public class Turret {
   private WPI_TalonSRX turretMotor = new WPI_TalonSRX(TURRET_TALON_ID);
 
   // Gyro
-  private final int TURRET_GYRO_ANALOG_PORT = 0;
-  private AnalogGyro gyro = new AnalogGyro(TURRET_GYRO_ANALOG_PORT);
+  private final int GYRO_ANALOG_PORT = 0;
+  private AnalogGyro gyro = new AnalogGyro(GYRO_ANALOG_PORT);
 
   // PID Controller Gains / Configuration Preferences
-  private final double TURRET_PID_CONTROLLER_KP = 0;
-  private final double TURRET_PID_CONTROLLER_KI = 0;
-  private final double TURRET_PID_CONTROLLER_KD = 0;
-  private final double TURRET_PID_ABSOLUTE_TOLERENCE_IN_DEGREES = 0;
-  private CustomPIDController turretController = new CustomPIDController(TURRET_PID_CONTROLLER_KP,
-                                                             TURRET_PID_CONTROLLER_KI,
-                                                             TURRET_PID_CONTROLLER_KD,
-                                                             0, gyro, turretMotor, 
-                                                             PIDController.kDefaultPeriod);
+  private final double PID_KP = 0;
+  private final double PID_KI = 0;
+  private final double PID_KD = 0;
+  private final double PID_KF = 0;
+  private final double PID_ERROR_TOLERENCE = 0; // turret PID error is measured in [degrees]
+  private CustomPIDController turretController = new CustomPIDController(PID_KP, PID_KI, PID_KD, PID_KF, 
+		  										 gyro, turretMotor, PIDController.kDefaultPeriod);
   
   // Singleton Instance
   private static final Turret instance = new Turret();
   
   private Turret() {
     // Configure PID Controller
-    turretController.setAbsoluteTolerance(TURRET_PID_ABSOLUTE_TOLERENCE_IN_DEGREES);
+    turretController.setAbsoluteTolerance(PID_ERROR_TOLERENCE);
+    
     gyro.calibrate();
   }
   

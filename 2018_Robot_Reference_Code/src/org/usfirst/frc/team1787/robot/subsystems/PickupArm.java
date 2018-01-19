@@ -17,14 +17,15 @@ public class PickupArm {
   
   // Pickup Wheels (Controlled by a talon)
   private final int PICKUP_WHEELS_TALON_ID = 3;
-  public final double DEFAULT_INTAKE_SPEED = -0.8;
   private WPI_TalonSRX pickupWheelsMotor = new WPI_TalonSRX(PICKUP_WHEELS_TALON_ID);
+  
+  public final double DEFAULT_INTAKE_SPEED = 0.8;
   
   // Singleton Instance
   private static final PickupArm instance = new PickupArm();
 
   private PickupArm() {
-    // Intentionally left blank. No initialization required.
+	pickupWheelsMotor.setInverted(true);
   }
   
   /**
