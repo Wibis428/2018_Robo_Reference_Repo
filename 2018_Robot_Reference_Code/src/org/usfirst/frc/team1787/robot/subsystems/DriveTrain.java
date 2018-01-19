@@ -125,18 +125,24 @@ public class DriveTrain {
   // Other Methods
 
   public void publishDataToSmartDash() {
+	SmartDashboard.putData("frontLeftMotor", frontLeftMotor);
+	SmartDashboard.putData("frontRightMotor", frontRightMotor);
+	SmartDashboard.putData("rearLeftMotor", rearLeftMotor);
+	SmartDashboard.putData("rearRightMotor", rearRightMotor);
+	
     SmartDashboard.putNumber("Average Velocity (meters per second)", getAvgVelocity());
+    
+    SmartDashboard.putData("leftEncoder", leftEncoder);
+    SmartDashboard.putNumber("Left Drive Encoder Ticks", leftEncoder.getRaw());
+    
+    SmartDashboard.putData("rightEncoder", rightEncoder);
+    SmartDashboard.putNumber("Right Drive Encoder Ticks", rightEncoder.getRaw());
     
     if (gearShifter.get() == HIGH_GEAR) {
       SmartDashboard.putString("Current Gear", "High Gear");
     } else {
       SmartDashboard.putString("Current Gear", "Low Gear");
     }
-    
-    SmartDashboard.putNumber("Left Drive Encoder Ticks", leftEncoder.getRaw());
-    SmartDashboard.putNumber("Right Drive Encoder Ticks", rightEncoder.getRaw());
-    SmartDashboard.putNumber("Left Drive Encoder Distance (m)", leftEncoder.getDistance());
-    SmartDashboard.putNumber("Right Drive Encoder Distance (m)", leftEncoder.getDistance());
   }
   
   public static DriveTrain getInstance() {

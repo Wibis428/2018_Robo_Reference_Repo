@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import org.opencv.core.Mat;
 import org.opencv.core.MatOfPoint;
 import org.opencv.core.Scalar;
+import org.usfirst.frc.team1787.robot.auto.AutoMethods;
 import org.usfirst.frc.team1787.robot.subsystems.DriveTrain;
 import org.usfirst.frc.team1787.robot.subsystems.Flywheel;
 import org.usfirst.frc.team1787.robot.subsystems.PickupArm;
@@ -77,6 +78,7 @@ public class Robot extends TimedRobot {
   private Winch winch = Winch.getInstance();
   private CameraController camController = CameraController.getInstance();
   private ImageProcessor imgProcessor = ImageProcessor.getInstance();
+  private AutoMethods auto = AutoMethods.getInstance();
   
   /* These subsystems are normally controlled collectively through the Shooter class,
    * but they are included here individually to tune PID loops for each component

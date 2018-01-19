@@ -7,8 +7,10 @@ public class AutoMethods {
 
   private SendableChooser<Integer> autoChooser = new SendableChooser<Integer>();
   private int selectedAuto;
+  
+  private static AutoMethods instance = new AutoMethods();
 
-  public AutoMethods() {
+  private AutoMethods() {
     // Add options to chooser
     autoChooser.addDefault("auto1", 1);
     autoChooser.addObject("auto2", 2);
@@ -41,5 +43,9 @@ public class AutoMethods {
   
   public void auto3() {
     
+  }
+  
+  public static AutoMethods getInstance() {
+    return instance;
   }
 }

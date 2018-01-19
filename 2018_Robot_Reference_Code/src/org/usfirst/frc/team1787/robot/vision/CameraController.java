@@ -222,7 +222,9 @@ public class CameraController {
    * @param img the frame to put on the dashboard.
    */
   public void pushFrameToDash(Mat img) {
-    outputStream.putFrame(img);
+	if (!img.empty()) {
+      outputStream.putFrame(img);
+	}
   }
   
   /**
