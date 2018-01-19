@@ -211,12 +211,16 @@ public class Robot extends TimedRobot {
     
     if (selectedStreamingSource == 0) {
       camController.getGearCamFrame(outputFrame);
+      SmartDashboard.putString("Selected Streaming Source", "gearCam");
     } else if (selectedStreamingSource == 1) {
       camController.getTurretCamFrame(outputFrame);
+      SmartDashboard.putString("Selected Streaming Source", "turretCam");
     } else if (selectedStreamingSource == 2) {
       outputFrame = imgProcessor.getOriginalFrame();
+      SmartDashboard.putString("Selected Streaming Source", "Processed Img (overlay)");
     } else if (selectedStreamingSource == 3) {
       outputFrame = imgProcessor.getProcessedFrame();
+      SmartDashboard.putString("Selected Streaming Source", "Processed Img (no overlay)");
     }
     camController.pushFrameToDash(outputFrame);
     
