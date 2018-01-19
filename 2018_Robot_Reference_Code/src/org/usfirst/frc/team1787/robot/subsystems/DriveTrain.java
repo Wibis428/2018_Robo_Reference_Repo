@@ -19,11 +19,8 @@ public class DriveTrain {
   private final int REAR_LEFT_TALON_ID = 7;
   private WPI_TalonSRX frontLeftMotor = new WPI_TalonSRX(FRONT_LEFT_TALON_ID);
   private WPI_TalonSRX rearLeftMotor = new WPI_TalonSRX(REAR_LEFT_TALON_ID);
-  private SpeedControllerGroup leftSide = new SpeedControllerGroup(frontLeftMotor, rearLeftMotor);
   private WPI_TalonSRX frontRightMotor = new WPI_TalonSRX(FRONT_RIGHT_TALON_ID);
   private WPI_TalonSRX rearRightMotor = new WPI_TalonSRX(REAR_RIGHT_TALON_ID);
-  private SpeedControllerGroup rightSide = new SpeedControllerGroup(frontRightMotor, rearRightMotor);
-  private DifferentialDrive driveController = new DifferentialDrive(leftSide, rightSide);
   
   // Encoders (one for each side of the drivetrain)
   private final int LEFT_ENCODER_A_CHANNEL = 2;
@@ -49,20 +46,57 @@ public class DriveTrain {
   private DriveTrain() {
     leftEncoder.setDistancePerPulse(METERS_PER_PULSE);
     rightEncoder.setDistancePerPulse(METERS_PER_PULSE);
+    
+    frontLeftMotor.setInverted(true);
+    rearLeftMotor.setInverted(true);
   }
   
   // Drive Train Related Methods
   
   public void arcadeDrive(double moveValue, double rotateValue) {
-    driveController.arcadeDrive(moveValue, -rotateValue);
+    //driveController.arcadeDrive(moveValue, -rotateValue);
+  }
+  
+  /**
+   * y value influences linear motion, 
+   * x value influences rate of rotation
+   * @param y
+   * @param x
+   */
+  public void otherArcadeDrive(double y, double x) {
+	  // use Math.abs() to preserve sign while squaring inputs
+	  y = y * Math.abs(y);
+	  x = x * Math.abs(x);	  
+	  
+	  double leftOutput = y + x;
+	  double rightOutput = y - x;
+	  
+	  // limit outputs to [-1, 1]
+	  if (leftOutput > 1) {
+		  leftOutput = 1;
+	  } else if (leftOutput < -1) {
+		  leftOutput = -1;
+	  }
+	  
+	  if (rightOutput > 1) {
+		  rightOutput = 1;
+	  } else if (rightOutput < -1) {
+		  rightOutput = -1;
+	  }
+	  
+	  setLeftRightMotorOutputs(leftOutput, rightOutput);
   }
   
   public void setLeftRightMotorOutputs(double leftOutput, double rightOutput) {
-    driveController.tankDrive(leftOutput, rightOutput);
+	  frontLeftMotor.set(leftOutput);
+	  rearLeftMotor.set(leftOutput);
+	  
+	  frontRightMotor.set(rightOutput);
+	  rearRightMotor.set(rightOutput);
   }
   
   public void stop() {
-    driveController.tankDrive(0, 0);
+    setLeftRightMotorOutputs(0, 0);
   }
   
   // Gear Shifter Related Methods

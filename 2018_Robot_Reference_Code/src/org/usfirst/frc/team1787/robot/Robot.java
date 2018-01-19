@@ -101,6 +101,7 @@ public class Robot extends TimedRobot {
 	   * 
 	   * 9) Review multi-threading for img processing
 	   * 10) review img processing code and see if cleanup is necessary
+	   * 10.5) Possibly reduce total extra streams to 1.
 	   * 
 	   * 11) Figure out what's up with the new network tables protocols
 	   * 12) Finish setting up the dashboard so that all values show
@@ -141,7 +142,8 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // Driving
     if (rightStick.getMagnitude() > leftStick.getMagnitude()) {
-      driveTrain.arcadeDrive(rightStick.getY(), rightStick.getX());
+      //driveTrain.arcadeDrive(rightStick.getY(), rightStick.getX());
+    	driveTrain.otherArcadeDrive(-rightStick.getY(), rightStick.getX());
     } else {
       /* Use of the left stick is currently reserved for the shooter. */
       //driveTrain.arcadeDrive(-1*rightStick.getY(), rightStick.getX());
