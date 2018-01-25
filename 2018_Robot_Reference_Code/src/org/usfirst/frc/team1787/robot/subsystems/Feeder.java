@@ -2,6 +2,8 @@ package org.usfirst.frc.team1787.robot.subsystems;
 
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
 public class Feeder {
   
   // Talons
@@ -11,9 +13,10 @@ public class Feeder {
   public final double DEFAULT_FEEDER_SPEED = 0.42;
   
   // Singleton Instance
-  private static final Feeder instance = new Feeder();
+  private static Feeder instance;
 
   private Feeder() {
+	// Config Talon
 	feederMotor.setInverted(true);
   }
   
@@ -23,17 +26,20 @@ public class Feeder {
    */
   public void spin(double moveValue) {
     feederMotor.set(moveValue);
-    // feeder is mounted such that positive move values will
-    // actually make it spin the wrong way, so the input is
-    // multiplied by -1 to get the desired behavior in the 
-    // method description.
   }
 
   public void stop() {
     feederMotor.set(0);
   }
   
+  public void publishDataToSmartDash() {
+	SmartDashboard.putData("Feeder Motor Output", feederMotor);
+  }
+  
   public static Feeder getInstance() {
+	if (instance == null) {
+      instance = new Feeder();
+	}
     return instance;
   }
 }

@@ -1,7 +1,11 @@
 package org.usfirst.frc.team1787.robot.utils;
 
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
+import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
+import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 public class TalonConfigurer {
@@ -18,7 +22,7 @@ public class TalonConfigurer {
    * 6) Enables voltage compensation mode, with a max voltage of 12 volts
    * @param talon the talon to configure.
    */
-  public static void configTalonWithDefaultSettings(TalonSRX talon) {
+  public static void configOpenLoopSettings(TalonSRX talon) {
     System.out.println("Configuring TalonSRX #" + talon.getDeviceID());
     
     // can be set to true if positive values make the motor turn backwards
@@ -44,9 +48,8 @@ public class TalonConfigurer {
     
     // Voltage Config Settings
     /* Open Loop Ramp: This sets constraints on the rate at which the voltage applied can change. This is to help prevent
-     * instantaneous changes in voltage that may harm the motor. 
-     * parameter: (minimumSecondsFromNeutralToFull, timeoutForChangingThisSettingInMs) 
-     * timeoutForChanging this setting = the max time allowed for the talon to change this setting. */
+     * instantaneous changes in voltage that may harm the motor. The input is the minimum amount of time (in seconds)
+     * the motor should take to go from an output of 0 to full output. */
     talon.configOpenloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
     // factory default deadband is 4% (4% = 0.04)
     talon.configNeutralDeadband(0.04, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
@@ -59,6 +62,47 @@ public class TalonConfigurer {
      
     talon.set(ControlMode.PercentOutput, 0);
   }
+  
+  public static void configSensorSettings(TalonSRX talon) {
+	
+	// Limit Switches
+	talon.configReverseLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.overrideLimitSwitchesEnable(false);
+	// Unsure which of these is appropriate, will have to check back at issues page on phoenix github.
+	
+	// Other Sensors
+	talon.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.setSensorPhase(false); // <- used to ensure positive sensor reading corresponds with positive motor output.
+	
+	/* Sensor readings are reported in native units. Velocity reported in native units per 100ms.
+	 * See CTRE-Phoenix github page for more info. */
+	
+	talon.configForwardSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configReverseSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configForwardSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configReverseSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.overrideSoftLimitsEnable(false); // <- can be used to disable soft limit feature, without changing the persistant settings above.
+	
+	
+  }
+  
+  public static void configUpdateRate(TalonSRX talon) {
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 10, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	// need to check documentation for default values.
+  }
+  
+  public static void checkBatteryReadings(TalonSRX talon) {
+	talon.clearStickyFaults(DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+  }
+  
+  /* Notes on other features:
+   * 
+   * 1) one talon can follow the output of another by using
+   * followerTalon.follow(masterTalon);
+   * 
+   * 
+   */
   
   /* Random Notes on WPI_TalonSRX */
   /* Notes on TalonSRX Update Frames can be found in the PDF version of the software reference manual.

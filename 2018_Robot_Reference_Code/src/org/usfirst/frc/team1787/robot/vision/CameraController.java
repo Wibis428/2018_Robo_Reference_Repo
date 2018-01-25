@@ -131,8 +131,8 @@ public class CameraController {
    */
   
   // UsbCamera objects are mainly used to config camera settings (resolution, exposure time, etc.)
-  private UsbCamera gearCam;
-  private UsbCamera turretCam;
+  private UsbCamera gearCam = new UsbCamera("gearCam", 0);
+  private UsbCamera turretCam = new UsbCamera("turretCam", 1);
   
   // these objects handle all the networking associated with the cameras,
   // as well as getting individual frames from a cam. See 2018 frc control system for more info.
@@ -176,8 +176,10 @@ public class CameraController {
     /* Initializes each camera, and links each camera to it's own Mjpeg Server
      * which automatically pushes regular (non-processed) images to the SmartDash 
      * (note: gearCam id (0) and turretCam id (1) were empirically determined through testing) */
-    turretCam = camServer.startAutomaticCapture("turretCam", 1);
-    gearCam = camServer.startAutomaticCapture("gearCam", 0);
+    //turretCam = camServer.startAutomaticCapture("turretCam", 1);
+    //gearCam = camServer.startAutomaticCapture("gearCam", 0);
+	  camServer.startAutomaticCapture(gearCam);
+	  camServer.startAutomaticCapture(turretCam);
     
     /* Configure settings like resolution, exposure, white balance, etc. */
     configCam(turretCam, true); // <- "true" indicates cam will be used for image processing

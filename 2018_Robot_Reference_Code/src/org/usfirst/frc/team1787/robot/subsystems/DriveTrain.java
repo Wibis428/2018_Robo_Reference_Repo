@@ -2,23 +2,25 @@ package org.usfirst.frc.team1787.robot.subsystems;
 
 import org.usfirst.frc.team1787.robot.utils.UnitConverter;
 
+import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
+import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveTrain {
   
   // Talons
-  private final int FRONT_RIGHT_TALON_ID = 8;
-  private final int REAR_RIGHT_TALON_ID = 9;
-  private final int FRONT_LEFT_TALON_ID = 6;
-  private final int REAR_LEFT_TALON_ID = 7;
-  private WPI_TalonSRX frontLeftMotor = new WPI_TalonSRX(FRONT_LEFT_TALON_ID);
-  private WPI_TalonSRX rearLeftMotor = new WPI_TalonSRX(REAR_LEFT_TALON_ID);
-  private WPI_TalonSRX frontRightMotor = new WPI_TalonSRX(FRONT_RIGHT_TALON_ID);
-  private WPI_TalonSRX rearRightMotor = new WPI_TalonSRX(REAR_RIGHT_TALON_ID);
+  private final int LEFT_MASTER_TALON_ID = 6;
+  private final int LEFT_FOLLOWER_TALON_ID = 7;
+  private final int RIGHT_MASTER_TALON_ID = 8;
+  private final int RIGHT_FOLLOWER_TALON_ID = 9;
+  private WPI_TalonSRX leftMasterMotor = new WPI_TalonSRX(LEFT_MASTER_TALON_ID);
+  private WPI_TalonSRX leftFollowerMotor = new WPI_TalonSRX(LEFT_FOLLOWER_TALON_ID);
+  private WPI_TalonSRX rightMasterMotor = new WPI_TalonSRX(RIGHT_MASTER_TALON_ID);
+  private WPI_TalonSRX rightFollowerMotor = new WPI_TalonSRX(RIGHT_FOLLOWER_TALON_ID);
   
   // Encoders (one for each side of the drivetrain)
   private final int LEFT_ENCODER_A_CHANNEL = 2;
@@ -41,14 +43,19 @@ public class DriveTrain {
   public final boolean LOW_GEAR = true;
   
   // Singleton Instance
-  private static final DriveTrain instance = new DriveTrain();
+  private static DriveTrain instance;
 
-  private DriveTrain() {
+  public DriveTrain() {
+    // Config Talons  
+    leftMasterMotor.setInverted(true);
+    leftFollowerMotor.setInverted(true);
+    
+    leftFollowerMotor.follow(leftMasterMotor);
+    rightFollowerMotor.follow(rightMasterMotor);
+    
+    // Config Encoders
     leftEncoder.setDistancePerPulse(METERS_PER_PULSE);
     rightEncoder.setDistancePerPulse(METERS_PER_PULSE);
-    
-    frontLeftMotor.setInverted(true);
-    rearLeftMotor.setInverted(true);
   }
   
   // Drive Train Related Methods
@@ -75,11 +82,8 @@ public class DriveTrain {
   }
   
   public void setDriveOutputs(double leftOutput, double rightOutput) {
-	  frontLeftMotor.set(leftOutput);
-	  rearLeftMotor.set(leftOutput);
-	  
-	  frontRightMotor.set(rightOutput);
-	  rearRightMotor.set(rightOutput);
+	  leftMasterMotor.set(leftOutput);  
+	  rightMasterMotor.set(rightOutput);
   }
   
   public void stop() {
@@ -125,19 +129,20 @@ public class DriveTrain {
   // Other Methods
 
   public void publishDataToSmartDash() {
-	SmartDashboard.putData("frontLeftMotor", frontLeftMotor);
-	SmartDashboard.putData("frontRightMotor", frontRightMotor);
-	SmartDashboard.putData("rearLeftMotor", rearLeftMotor);
-	SmartDashboard.putData("rearRightMotor", rearRightMotor);
+    // Talons
+	SmartDashboard.putData("Drive Train Output (Left)", leftMasterMotor);
+	SmartDashboard.putData("Drive Train Output (Right)", rightMasterMotor);
 	
+	// Encoders
     SmartDashboard.putNumber("Average Velocity (meters per second)", getAvgVelocity());
     
-    SmartDashboard.putData("leftEncoder", leftEncoder);
+    SmartDashboard.putData("Left Drive Encoder", leftEncoder);
     SmartDashboard.putNumber("Left Drive Encoder Ticks", leftEncoder.getRaw());
     
-    SmartDashboard.putData("rightEncoder", rightEncoder);
+    SmartDashboard.putData("Right Drive Encoder", rightEncoder);
     SmartDashboard.putNumber("Right Drive Encoder Ticks", rightEncoder.getRaw());
     
+    // Gear Shifter
     if (gearShifter.get() == HIGH_GEAR) {
       SmartDashboard.putString("Current Gear", "High Gear");
     } else {
@@ -146,6 +151,9 @@ public class DriveTrain {
   }
   
   public static DriveTrain getInstance() {
+    if (instance == null) {
+    	instance = new DriveTrain();
+    }
     return instance;
   }
 }

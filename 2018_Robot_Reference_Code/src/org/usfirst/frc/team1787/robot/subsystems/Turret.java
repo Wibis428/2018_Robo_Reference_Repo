@@ -28,13 +28,14 @@ public class Turret {
 		  										 gyro, turretMotor, PIDController.kDefaultPeriod);
   
   // Singleton Instance
-  private static final Turret instance = new Turret();
+  private static Turret instance;
   
   private Turret() {
-    // Configure PID Controller
+	// init gyro
+	gyro.calibrate();
+	
+	// config PID controller
     turretController.setAbsoluteTolerance(PID_ERROR_TOLERENCE);
-    
-    gyro.calibrate();
   }
   
   public CustomPIDController getPIDController() {
@@ -49,11 +50,11 @@ public class Turret {
     gyro.reset();
   }
 
-  public void manualControl(double value) {
+  public void manualControl(double moveValue) {
     if (turretController.isEnabled()) {
       turretController.reset();
     }
-    turretMotor.set(value);
+    turretMotor.set(moveValue);
   }
   
   public void stop() {
@@ -61,14 +62,22 @@ public class Turret {
   }
 
   public void publishDataToSmartDash() {
-    SmartDashboard.putBoolean("Turret PID Enabled", turretController.isEnabled());
-    SmartDashboard.putNumber("turretAngle", gyro.getAngle());
-    SmartDashboard.putNumber("turretError", turretController.getError());
-    SmartDashboard.putNumber("turretMotorOutput", turretController.get());
-    SmartDashboard.putBoolean("Turret On Target", turretController.onTarget());
+	// Talon
+	SmartDashboard.putData("Turret Motor Output", turretMotor);
+	
+	// Gyro
+	SmartDashboard.putData("Gyro", gyro);
+	
+	// PID controller
+	SmartDashboard.putData("Turret PID Controller", turretController);
+    SmartDashboard.putNumber("Turret PID Error", turretController.getError());
+    SmartDashboard.putBoolean("Turret PID On Target", turretController.onTarget());
   }
   
   public static Turret getInstance() {
+	if (instance == null) {
+      instance = new Turret();
+	}
     return instance;
   }
 }

@@ -37,20 +37,20 @@ public class Flywheel {
   // Flywheel Geometry (in meters) (note that flywheel has 4.875 inch diameter)
   private final double FLYWHEEL_RADIUS = UnitConverter.inchesToMeters(4.875/2.0);
   private final double FLYWHEEL_CIRCUMFERENCE = 2 * Math.PI * FLYWHEEL_RADIUS;
-  private final double EXIT_ANGLE_DEGREES = 1;
+  private final double EXIT_ANGLE_DEGREES = 1; // <- PLACEHOLDER
   private final double EXIT_ANGLE_RADIANS = Math.toRadians(EXIT_ANGLE_DEGREES);
   
   // Singleton Instance
-  private static final Flywheel instance = new Flywheel();
+  private static Flywheel instance;
   
   private Flywheel() {
     // Configure Talon
 	flywheelMotor.setNeutralMode(NeutralMode.Coast);
 
     // Configure Encoder
+	flywheelEncoder.setReverseDirection(true);
+	flywheelEncoder.setDistancePerPulse(FLYWHEEL_ENCODER_REVOLUTIONS_PER_PULSE);
     flywheelEncoder.setPIDSourceType(PIDSourceType.kRate);
-    flywheelEncoder.setDistancePerPulse(FLYWHEEL_ENCODER_REVOLUTIONS_PER_PULSE);
-    flywheelEncoder.setReverseDirection(true);
     
     // Configure PID Controller
     flywheelController.setAbsoluteTolerance(PID_ERROR_TOLERANCE);
@@ -106,11 +106,11 @@ public class Flywheel {
   
   // Other Methods
   
-  public void manualControl(double value) {
+  public void manualControl(double moveValue) {
     if (flywheelController.isEnabled()) {
       flywheelController.reset();
     }
-    flywheelMotor.set(value);
+    flywheelMotor.set(moveValue);
   }
   
   public void stop() {
@@ -118,15 +118,23 @@ public class Flywheel {
   }
 
   public void publishDataToSmartDash() {
-    SmartDashboard.putBoolean("Flywheel PID Enabled", flywheelController.isEnabled());
-    SmartDashboard.putNumber("Flywheel Encoder Ticks", flywheelEncoder.getRaw());
-    SmartDashboard.putNumber("flywheelRPS", flywheelEncoder.getRate());
-    SmartDashboard.putNumber("flywheelError", flywheelController.getError());
-    SmartDashboard.putNumber("flywheelOutputVoltage", flywheelController.get());
-    SmartDashboard.putBoolean("Flywheel On Target", flywheelController.onTarget());
+	// Talon
+	SmartDashboard.putData("Flywheel Motor Output", flywheelMotor);
+	
+	// Encoder
+	SmartDashboard.putData("Flywheel Encoder", flywheelEncoder);
+	SmartDashboard.putNumber("Flywheel Encoder Ticks", flywheelEncoder.getRaw());
+	
+	// PID Controller
+	SmartDashboard.putData("Flywheel PID Controller", flywheelController);
+    SmartDashboard.putNumber("Flywheel PID Error", flywheelController.getError());
+    SmartDashboard.putBoolean("Flywheel PID On Target", flywheelController.onTarget());
   }
   
   public static Flywheel getInstance() {
+	if (instance == null) {
+      instance = new Flywheel();
+	}
     return instance;
   }
 }

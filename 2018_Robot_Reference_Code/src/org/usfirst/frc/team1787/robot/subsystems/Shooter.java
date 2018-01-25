@@ -20,7 +20,7 @@ public class Shooter {
   private ImageProcessor imgProcessor = ImageProcessor.getInstance();
   
   // Singleton Instance
-  private static final Shooter instance = new Shooter();
+  private static Shooter instance;
 
   private Shooter() {
     // Intentionally left blank; no initialization needed.
@@ -30,6 +30,7 @@ public class Shooter {
     turret.getPIDController().enable();
     flywheel.getPIDController().enable();
   }
+  
   
   public boolean pidIsEnabled() {
     return turret.getPIDController().isEnabled() ||
@@ -58,10 +59,10 @@ public class Shooter {
     flywheel.zeroSensors();
   }
   
-  public void manualControl(double turretValue, double flywheelValue, double feederValue) {
-    turret.manualControl(turretValue);
-    flywheel.manualControl(flywheelValue);
-    feeder.spin(feederValue);
+  public void manualControl(double turretMoveValue, double flywheelMoveValue, double feederMoveValue) {
+    turret.manualControl(turretMoveValue);
+    flywheel.manualControl(flywheelMoveValue);
+    feeder.spin(feederMoveValue);
   }
   
   public void manualControl(Joystick stick) {
@@ -83,9 +84,13 @@ public class Shooter {
   public void publishDataToSmartDash() {
     turret.publishDataToSmartDash();
     flywheel.publishDataToSmartDash();
+    feeder.publishDataToSmartDash();
   }
   
   public static Shooter getInstance() {
+	if (instance == null) {
+      instance = new Shooter();
+	}
     return instance;
   }
 }

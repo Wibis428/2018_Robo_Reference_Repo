@@ -8,7 +8,7 @@ import org.opencv.core.Scalar;
 import org.usfirst.frc.team1787.robot.auto.AutoMethods;
 import org.usfirst.frc.team1787.robot.subsystems.DriveTrain;
 import org.usfirst.frc.team1787.robot.subsystems.Flywheel;
-import org.usfirst.frc.team1787.robot.subsystems.PickupArm;
+import org.usfirst.frc.team1787.robot.subsystems.Intake;
 import org.usfirst.frc.team1787.robot.subsystems.Shooter;
 import org.usfirst.frc.team1787.robot.subsystems.Turret;
 import org.usfirst.frc.team1787.robot.subsystems.Winch;
@@ -73,7 +73,7 @@ public class Robot extends TimedRobot {
   
   // Instances of Subsystems
   private DriveTrain driveTrain = DriveTrain.getInstance();
-  private PickupArm pickupArm = PickupArm.getInstance();
+  private Intake pickupArm = Intake.getInstance();
   private Shooter shooter = Shooter.getInstance();
   private Winch winch = Winch.getInstance();
   private CameraController camController = CameraController.getInstance();
@@ -142,7 +142,8 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // Driving
     driveTrain.arcadeDrive(-rightStick.getY(), rightStick.getX());
-    
+	  //driveTrain.tryCurveDrive(rightStick.getY(), -rightStick.getX(), rightStick.getRawButton(EXPELL_BUTTON));
+
     // Gear Shifter
     if (rightStick.getRawAxis(JOYSTICK_SLIDER_AXIS) < 0) {
       driveTrain.setGear(driveTrain.HIGH_GEAR);
@@ -163,7 +164,7 @@ public class Robot extends TimedRobot {
     if (rightStick.getRawButton(INTAKE_BUTTON)) {
       pickupArm.spinIntake(pickupArm.DEFAULT_INTAKE_SPEED);
     } else if (rightStick.getRawButton(EXPELL_BUTTON)) {
-      pickupArm.spinIntake(-1 * pickupArm.DEFAULT_INTAKE_SPEED);
+      //pickupArm.spinIntake(-1 * pickupArm.DEFAULT_INTAKE_SPEED);
     } else {
       pickupArm.spinIntake(0);
     }
