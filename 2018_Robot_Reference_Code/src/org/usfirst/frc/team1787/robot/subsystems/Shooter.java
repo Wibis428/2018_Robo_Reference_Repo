@@ -31,7 +31,6 @@ public class Shooter {
     flywheel.getPIDController().enable();
   }
   
-  
   public boolean pidIsEnabled() {
     return turret.getPIDController().isEnabled() ||
            flywheel.getPIDController().isEnabled();

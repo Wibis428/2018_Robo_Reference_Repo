@@ -67,23 +67,23 @@ public class DriveTrain {
    * @param x
    */
   public void arcadeDrive(double y, double x) {
-	  // use Math.abs() to preserve sign while squaring inputs
-	  y = y * Math.abs(y);
-	  x = x * Math.abs(x);	  
+	// use Math.abs() to preserve sign while squaring inputs
+	y = y * Math.abs(y);
+	x = x * Math.abs(x);	  
+     
+    double leftOutput = y + x;
+	double rightOutput = y - x;
 	  
-	  double leftOutput = y + x;
-	  double rightOutput = y - x;
+	// limit outputs to [-1, 1]
+    leftOutput = Math.max(-1, Math.min(leftOutput, 1));
+	rightOutput = Math.max(-1, Math.min(rightOutput, 1));
 	  
-	  // limit outputs to [-1, 1]
-	  leftOutput = Math.max(-1, Math.min(leftOutput, 1));
-	  rightOutput = Math.max(-1, Math.min(rightOutput, 1));
-	  
-	  setDriveOutputs(leftOutput, rightOutput);
+	setDriveOutputs(leftOutput, rightOutput);
   }
   
   public void setDriveOutputs(double leftOutput, double rightOutput) {
-	  leftMasterMotor.set(leftOutput);  
-	  rightMasterMotor.set(rightOutput);
+	leftMasterMotor.set(leftOutput);  
+	rightMasterMotor.set(rightOutput);
   }
   
   public void stop() {
@@ -152,7 +152,7 @@ public class DriveTrain {
   
   public static DriveTrain getInstance() {
     if (instance == null) {
-    	instance = new DriveTrain();
+      instance = new DriveTrain();
     }
     return instance;
   }

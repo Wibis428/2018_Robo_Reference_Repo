@@ -114,6 +114,11 @@ public class Robot extends TimedRobot {
 	   * 
 	   * 11) Review what's up with the new network tables protocols
 	   * 12) Finish setting up the dashboard so that all values show
+	   * 
+	   * 13) make arcadeDrive consistent with what I learned in robotics + fix documentation.
+	   * 
+	   * 14) double check it's ok to remove all instances of CustomPIDController.
+	   * 15) Replace all instances of CustomPIDController if this is the case.
 	   */
   }
   
