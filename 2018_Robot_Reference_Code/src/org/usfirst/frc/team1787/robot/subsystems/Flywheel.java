@@ -1,6 +1,5 @@
 package org.usfirst.frc.team1787.robot.subsystems;
 
-import org.usfirst.frc.team1787.robot.utils.CustomPIDController;
 import org.usfirst.frc.team1787.robot.utils.UnitConverter;
 
 import com.ctre.phoenix.motorcontrol.NeutralMode;
@@ -31,7 +30,7 @@ public class Flywheel {
   private final double PID_KD = 0;
   private final double PID_KF = 1.0 / 80; // (max setpoint is 80 revolutions / second)
   private final double PID_ERROR_TOLERANCE = 0;
-  private CustomPIDController flywheelController = new CustomPIDController(PID_KP, PID_KI, PID_KD, PID_KF,
+  private PIDController flywheelController = new PIDController(PID_KP, PID_KI, PID_KD, PID_KF,
 		  										   flywheelEncoder, flywheelMotor, PIDController.kDefaultPeriod);
 
   // Flywheel Geometry (in meters) (note that flywheel has 4.875 inch diameter)
@@ -58,7 +57,7 @@ public class Flywheel {
   
   // PID Controller Methods
   
-  public CustomPIDController getPIDController() {
+  public PIDController getPIDController() {
     return flywheelController;
   }
   

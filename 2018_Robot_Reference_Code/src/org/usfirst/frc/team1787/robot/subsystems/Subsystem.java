@@ -1,6 +1,6 @@
 package org.usfirst.frc.team1787.robot.subsystems;
 
-import org.usfirst.frc.team1787.robot.utils.CustomPIDController;
+import edu.wpi.first.wpilibj.PIDController;
 
 /**
  * This interface is included to act as a guide / checklist for what methods to include
@@ -69,7 +69,7 @@ public interface Subsystem<T> {
    * the controller in different parts of the code.
    * @return
    */
-  public CustomPIDController getPIDController();
+  public PIDController getPIDController();
   
   /**
    * It's quite useful to have a method that will quickly allow you to reset 

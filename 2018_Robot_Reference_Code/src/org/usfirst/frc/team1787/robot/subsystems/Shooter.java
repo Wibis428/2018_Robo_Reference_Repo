@@ -50,7 +50,15 @@ public class Shooter {
   
   public void trackTarget() {
     imgProcessor.runVisionProcessing();
-    turret.getPIDController().setRelativeSetpoint(imgProcessor.getCurrentTarget().getErrorInDegreesX());
+    double currentAngle = turret.getGyro().getAngle();
+    double targetError = imgProcessor.getCurrentTarget().getErrorInDegreesX();
+    
+    /* currentAngle and targetError are added to get the setpoint because 
+     * targetError is relative to where we currently are.
+     * For example, if the target is 30 degrees to the right, and the turret angle 
+     * currently reads 50 degrees, then the setpoint for the PIDController should be 80,
+     * as that will cause the turret to turn 30 degrees to the right starting from where it currently is. */
+    turret.getPIDController().setSetpoint(currentAngle + targetError);
   }
   
   public void zeroSensors() {
