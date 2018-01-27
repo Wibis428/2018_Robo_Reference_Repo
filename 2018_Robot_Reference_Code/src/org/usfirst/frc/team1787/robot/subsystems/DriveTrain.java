@@ -2,12 +2,10 @@ package org.usfirst.frc.team1787.robot.subsystems;
 
 import org.usfirst.frc.team1787.robot.utils.UnitConverter;
 
-import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.can.WPI_TalonSRX;
 
 import edu.wpi.first.wpilibj.Encoder;
 import edu.wpi.first.wpilibj.Solenoid;
-import edu.wpi.first.wpilibj.drive.DifferentialDrive;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 public class DriveTrain {
@@ -58,7 +56,11 @@ public class DriveTrain {
     rightEncoder.setDistancePerPulse(METERS_PER_PULSE);
   }
   
-  // Drive Train Related Methods
+  /* 
+   * --------------------------------
+   * Driving Functions
+   * -------------------------------- 
+   */
   
   /**
    * y value influences linear motion, 
@@ -90,7 +92,34 @@ public class DriveTrain {
     setDriveOutputs(0, 0);
   }
   
-  // Gear Shifter Related Methods
+  /* 
+   * --------------------------------
+   * Encoder Functions
+   * --------------------------------
+   */
+  
+  public void zeroSensors() {
+    leftEncoder.reset();
+    rightEncoder.reset();
+  }
+	  
+  public Encoder getLeftEncoder() {
+    return leftEncoder;
+  }
+  
+  public Encoder getRightEncoder() {
+    return rightEncoder;
+  }
+	  
+  public double getAvgVelocity() {
+    return (leftEncoder.getRate() + rightEncoder.getRate()) / 2.0;
+  }
+  
+  /*
+   * --------------------------------
+   * Gear Shifter Functions
+   * --------------------------------
+   */
   
   /**
    * @param desiredGear use either DriveTrain.LOW_GEAR or
@@ -107,26 +136,11 @@ public class DriveTrain {
     return gearShifter.get();
   }
   
-  // Encoder Related Methods
-  
-  public void zeroSensors() {
-    leftEncoder.reset();
-    rightEncoder.reset();
-  }
-  
-  public Encoder getLeftEncoder() {
-    return leftEncoder;
-  }
-  
-  public Encoder getRightEncoder() {
-    return rightEncoder;
-  }
-  
-  public double getAvgVelocity() {
-    return (leftEncoder.getRate() + rightEncoder.getRate()) / 2.0;
-  }
-  
-  // Other Methods
+  /*
+   * --------------------------------
+   * Other Functions
+   * --------------------------------
+   */
 
   public void publishDataToSmartDash() {
     // Talons
