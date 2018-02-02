@@ -1,11 +1,14 @@
 package org.usfirst.frc.team1787.robot.utils;
 
+import com.ctre.phoenix.ParamEnum;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
+import com.ctre.phoenix.motorcontrol.IMotorController;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.VelocityMeasPeriod;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 public class TalonConfigurer {
@@ -25,32 +28,44 @@ public class TalonConfigurer {
   public static void configOpenLoopSettings(TalonSRX talon) {
     System.out.println("Configuring TalonSRX #" + talon.getDeviceID());
     
-    // can be set to true if positive values make the motor turn backwards
+    /* config which direction the motor turns when calling talon.set() with positive values.
+     * by convention, this should be whichever direction that's considered forward.
+     * Note: all motors in a master/follower chain need to have their direction set independently.
+     */
     talon.setInverted(false);
     
-    // determines what the motor does (either brake or coast) when an output of 0 is sent to the motor controller
+    /* config what the motor does when set to an output of 0.
+     * Note: all motors in a master/follower chain need to have their neutral mode set independently.
+     */
     talon.setNeutralMode(NeutralMode.Brake);
     
-    /*The above 2 config settings are the only config settings that need to be set on a "follower" talon.
-     * it seems that all other config settings will be inherited from the master talon. */
-    
-    // Current Config Settings
-    /* There are 3 different parameters that are important regarding current limiting.
-     * 1) peakCurrentLimit: this is the max amount of current (in amps) that the motor controller will give to the motor.
-     * 2) peakCurrentDuration: this is the max amount of time (in ms) that the peakCurrentLimit will be applied to the motor. 
-     * 3) continuousCurrentLimit: this is the "fallback" current that will be applied to a motor 
-     * that has been drawing the peakCurrentLimit for the peakCurrentDuration. 
-     * Note: If the peakCurrentLimit is set to 0, then the continuousCurrentLimit will be enforced at all times. */
+    // Current (as in electric current) Config Settings
+    /* If a motor draws an amount of current greater than **peakCurrentLimit** amps
+     * for more than **peakCurrentDuration** milliseconds, then current limiting will be activated.
+     * This causes the current draw to be limited to **continuousCurrentLimit** amps.
+     * 
+     * If peakCurrentDuration is configured to 0, current limiting is enforced 
+     * immediately after current-draw surpasses the peak current threshold.
+     * 
+     * Warning: currentLimit below 5 amps not recommended. See phoenix documentation for why. 
+     */
     talon.configPeakCurrentLimit(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
     talon.configPeakCurrentDuration(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
     talon.configContinuousCurrentLimit(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-    talon.enableCurrentLimit(false); // intentionally not enabling any current limit yet.
+    talon.enableCurrentLimit(false);
     
     // Voltage Config Settings
-    /* Open Loop Ramp: This sets constraints on the rate at which the voltage applied can change. This is to help prevent
-     * instantaneous changes in voltage that may harm the motor. The input is the minimum amount of time (in seconds)
-     * the motor should take to go from an output of 0 to full output. */
+    /* Allows constraints on the rate at which applied voltage can change.
+     * The input is the minimum amount of time (in seconds) required to go from an output of 0 to full output.
+     * 
+     * Note: followers in a master/follower chain should all be configured 
+     * with a ramp rate of 0 (i.e. no restriction on ramp rate), because they will already
+     * mimic the output of the master.
+     */
     talon.configOpenloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configClosedloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    
+    
     // factory default deadband is 4% (4% = 0.04)
     talon.configNeutralDeadband(0.04, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
     
@@ -64,25 +79,44 @@ public class TalonConfigurer {
   }
   
   public static void configSensorSettings(TalonSRX talon) {
+    /* IMPORTANT NOTE: Sensor readings are reported in native units. Velocity reported in native units per 100ms.
+     * See CTRE-Phoenix github page (https://github.com/CrossTheRoadElec/Phoenix-Documentation) for more info.
+     */
 	
 	// Limit Switches
-	talon.configReverseLimitSwitchSource(LimitSwitchSource.Deactivated, LimitSwitchNormal.Disabled, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.overrideLimitSwitchesEnable(false);
-	// Unsure which of these is appropriate, will have to check back at issues page on phoenix github.
+    talon.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.overrideLimitSwitchesEnable(false); // <- can be used to enable and disable limit switch features on the fly.
+	
+	// Extra Limit Switch Features
+	/* Limit switches can be configured to zero the selectedSensor position when asserted. Pass 1 to the 2nd argument
+	 * to enable this feature. Pass 0 to the 2nd argument to disable this feature. Arguments 2 & 3 aren't used.
+	 */
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
 	// Other Sensors
-	talon.configSelectedFeedbackSensor(FeedbackDevice.QuadEncoder, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.setSensorPhase(false); // <- used to ensure positive sensor reading corresponds with positive motor output.
+	talon.configSelectedFeedbackSensor(FeedbackDevice.None, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.setSensorPhase(false); // <- use this function to ensure positive sensor readings correspond to positive motor output.
 	
-	/* Sensor readings are reported in native units. Velocity reported in native units per 100ms.
-	 * See CTRE-Phoenix github page for more info. */
+	/* if using an analog sensor, you can select whether or not it's continuous.
+	 * An example of a continuous sensor is a gyro that will give readings 
+	 * above 360 degrees instead of just wrapping back to 0.
+	 * See TalonSRX software reference manual pg. 46 for more info.
+	 */
+	//talon.configSetParameter(ParamEnum.eFeedbackNotContinuous, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
+	// Soft Limit can be used to stop a motor if the selectedSensorPosition goes past the given threshold.
 	talon.configForwardSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configForwardSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.overrideSoftLimitsEnable(false); // <- can be used to disable soft limit feature, without changing the persistant settings above.
+	talon.overrideSoftLimitsEnable(false); // <- can be used to enable/disable soft limit feature on the fly.
+	
+	// Config Sensor Measurement Settings (see page. 52 in software reference manual)
+	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configVelocityMeasurementWindow(64, DEFAULT_TALON_FUNCTION_TIMEOUT_MS); // <- num of samples in rolling average.
+	
 	
 	
   }
@@ -94,6 +128,17 @@ public class TalonConfigurer {
   
   public static void checkBatteryReadings(TalonSRX talon) {
 	talon.clearStickyFaults(DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+  }
+  
+  public TalonSRX createMasterTalon(int id) {
+	TalonSRX returnVal = new TalonSRX(id);
+	return returnVal;
+  }
+  
+  public TalonSRX createFollowerTalon(int followerId, IMotorController master) {
+	TalonSRX returnVal = new TalonSRX(followerId);
+	returnVal.follow(master);
+	return returnVal;
   }
   
   /* Notes on other features:

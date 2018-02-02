@@ -56,8 +56,7 @@ public class DriveTrain {
     rightEncoder.setDistancePerPulse(METERS_PER_PULSE);
   }
   
-  /* 
-   * --------------------------------
+  /* --------------------------------
    * Driving Functions
    * -------------------------------- 
    */
@@ -92,16 +91,10 @@ public class DriveTrain {
     setDriveOutputs(0, 0);
   }
   
-  /* 
-   * --------------------------------
+  /* --------------------------------
    * Encoder Functions
    * --------------------------------
    */
-  
-  public void zeroSensors() {
-    leftEncoder.reset();
-    rightEncoder.reset();
-  }
 	  
   public Encoder getLeftEncoder() {
     return leftEncoder;
@@ -110,13 +103,17 @@ public class DriveTrain {
   public Encoder getRightEncoder() {
     return rightEncoder;
   }
+  
+  public void zeroSensors() {
+	leftEncoder.reset();
+	rightEncoder.reset();
+  }
 	  
   public double getAvgVelocity() {
     return (leftEncoder.getRate() + rightEncoder.getRate()) / 2.0;
   }
   
-  /*
-   * --------------------------------
+  /* --------------------------------
    * Gear Shifter Functions
    * --------------------------------
    */
@@ -136,8 +133,7 @@ public class DriveTrain {
     return gearShifter.get();
   }
   
-  /*
-   * --------------------------------
+  /* --------------------------------
    * Other Functions
    * --------------------------------
    */

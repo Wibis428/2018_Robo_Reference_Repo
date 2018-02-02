@@ -22,7 +22,7 @@ public class Flywheel {
   private Encoder flywheelEncoder = new Encoder(ENCODER_A_CHANNEL, ENCODER_B_CHANNEL);
   
   //2048 encoder ticks per encoder revolution, and the encoder is mounted on the same axle as the flywheel
-  private final double FLYWHEEL_ENCODER_REVOLUTIONS_PER_PULSE = 1.0 / 2048;
+  private final double FLYWHEEL_ENCODER_REVOLUTIONS_PER_PULSE = 1.0 / 2048; // 2048 * 4 raw ticks
 
   // PID Control Loop Gains / Preferences
   private final double PID_KP = 0;

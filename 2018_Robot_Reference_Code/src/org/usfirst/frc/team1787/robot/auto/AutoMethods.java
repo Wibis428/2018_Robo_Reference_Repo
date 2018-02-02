@@ -8,6 +8,10 @@ public class AutoMethods {
   private SendableChooser<Integer> autoChooser = new SendableChooser<Integer>();
   private int selectedAuto;
   
+  // Keep track of the current action being performed in the selected routine
+  private int currStage = 0;
+  private boolean currStageComplete = false;
+  
   private static AutoMethods instance = new AutoMethods();
 
   private AutoMethods() {
@@ -34,7 +38,30 @@ public class AutoMethods {
   }
 
   public void auto1() {
-
+	/* The idea:
+	 * Have each function return a boolean that indicates
+	 * if the requested movement has been completed. 
+	 * when that boolean reads true (i.e. the current action is complete),
+	 * 1) zero sensors for the next stage
+	 * 2) increment currStage counter
+	 * 3) reset the currStageComplete boolean. 
+	 * */
+	
+    if (currStage == 0) {
+      // currStageComplete = driveTrain.driveDistance(5);
+    } else if (currStage == 1) {
+      // currStageComplete = driveTrain.turnDegrees(60);
+    } else if (currStage == 2) {
+      // currStageComplete = drivetrain.driveDistance(2);
+    } else if (currStage == 4) {
+      // currStageComplete = shooter.ejectCube();
+    }
+    
+    if (currStageComplete) {
+      zeroAllSensors();
+      currStage++;
+      currStageComplete = false;
+    }
   }
   
   public void auto2() {
@@ -43,6 +70,16 @@ public class AutoMethods {
   
   public void auto3() {
     
+  }
+  
+  public void zeroAllSensors() {
+    
+  }
+  
+  public void reset() {
+	zeroAllSensors();
+	currStage = 0;
+	currStageComplete = false;
   }
   
   public static AutoMethods getInstance() {
