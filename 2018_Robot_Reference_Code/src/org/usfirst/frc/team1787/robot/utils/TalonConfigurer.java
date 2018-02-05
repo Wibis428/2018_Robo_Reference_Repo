@@ -2,12 +2,14 @@ package org.usfirst.frc.team1787.robot.utils;
 
 import com.ctre.phoenix.ParamEnum;
 import com.ctre.phoenix.motorcontrol.ControlMode;
+import com.ctre.phoenix.motorcontrol.Faults;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
 import com.ctre.phoenix.motorcontrol.IMotorController;
 import com.ctre.phoenix.motorcontrol.LimitSwitchNormal;
 import com.ctre.phoenix.motorcontrol.LimitSwitchSource;
 import com.ctre.phoenix.motorcontrol.NeutralMode;
 import com.ctre.phoenix.motorcontrol.StatusFrameEnhanced;
+import com.ctre.phoenix.motorcontrol.StickyFaults;
 import com.ctre.phoenix.motorcontrol.VelocityMeasPeriod;
 import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
@@ -74,13 +76,16 @@ public class TalonConfigurer {
     // Sets max voltage for voltage compensation mode.
     talon.configVoltageCompSaturation(12, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
     talon.enableVoltageCompensation(true);
+    
+    // Voltage Measurement (# of samples in rolling average)
+    talon.configVoltageMeasurementFilter(32, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
      
     talon.set(ControlMode.PercentOutput, 0);
   }
   
   public static void configSensorSettings(TalonSRX talon) {
     /* IMPORTANT NOTE: Sensor readings are reported in native units. Velocity reported in native units per 100ms.
-     * See CTRE-Phoenix github page (https://github.com/CrossTheRoadElec/Phoenix-Documentation) for more info.
+     * See CTRE documentation on github (https://github.com/CrossTheRoadElec/Phoenix-Documentation) for more info.
      */
 	
 	// Limit Switches
@@ -91,11 +96,12 @@ public class TalonConfigurer {
 	// Extra Limit Switch Features
 	/* Limit switches can be configured to zero the selectedSensor position when asserted. Pass 1 to the 2nd argument
 	 * to enable this feature. Pass 0 to the 2nd argument to disable this feature. Arguments 2 & 3 aren't used.
+	 * See pg. 103 for some more info and a similar config for quadrature encoders w/ an index pin.
 	 */
 	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
-	// Other Sensors
+	// Other Sensors (see TalonSRX software reference manual for full list of supported sensors)
 	talon.configSelectedFeedbackSensor(FeedbackDevice.None, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.setSensorPhase(false); // <- use this function to ensure positive sensor readings correspond to positive motor output.
 	
@@ -107,26 +113,64 @@ public class TalonConfigurer {
 	//talon.configSetParameter(ParamEnum.eFeedbackNotContinuous, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
 	// Soft Limit can be used to stop a motor if the selectedSensorPosition goes past the given threshold.
+	// if (selectedSensorPosition > fwdSoftLimitThreshold) stop fwd movement.
+	// if (selectedSensorPosition < reverseSoftLimitThreshold) stop backward movement.
 	talon.configForwardSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configForwardSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.overrideSoftLimitsEnable(false); // <- can be used to enable/disable soft limit feature on the fly.
+	talon.overrideSoftLimitsEnable(false); // <- pass false to disable the soft limits feature. pass true to honor the given configs above.
 	
-	// Config Sensor Measurement Settings (see page. 52 in software reference manual)
+	// Config Sensor Measurement Settings (see pages. 50 & 52 in the TalonSRX software reference manual for more info)
 	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	talon.configVelocityMeasurementWindow(64, DEFAULT_TALON_FUNCTION_TIMEOUT_MS); // <- num of samples in rolling average.
 	
+	// Note, if using a Tachometer, see github documentation and software reference manual, as they have some specific configs just for them.
+	talon.setSelectedSensorPosition(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
+  }
+  
+  public static void configClosedLoopSettings(TalonSRX talon) {
+	talon.configClosedloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	
+	
+	// see software reference pg 72-74
+	talon.selectProfileSlot(0, 0);
+	talon.config_kP(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.config_kI(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.config_kD(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.config_kF(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	
+	// pg. 78
+	talon.config_IntegralZone(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	
+	// pg. 66
+	talon.configNominalOutputForward(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configNominalOutputReverse(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputForward(1, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputReverse(-1, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	
+	talon.configNeutralDeadband(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	
+	talon.configAllowableClosedloopError(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
   }
   
   public static void configUpdateRate(TalonSRX talon) {
 	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 10, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	// need to check documentation for default values.
+	// see pg. 89 for example usage.
+	// pgs. 131-134 have more in-depth info.
   }
   
   public static void checkBatteryReadings(TalonSRX talon) {
+	// see pg. 105-107
+	StickyFaults stickyFaults = new StickyFaults();
+	Faults nonStickyFaults = new Faults();
+	
+	talon.getStickyFaults(stickyFaults);
+	talon.getFaults(nonStickyFaults);
+	
 	talon.clearStickyFaults(DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
   }
   
