@@ -69,6 +69,7 @@ public class DriveTrain {
    */
   public void arcadeDrive(double y, double x) {
 	// use Math.abs() to preserve sign while squaring inputs
+	// inputs are squared to provide finer control at lower speeds.
 	y = y * Math.abs(y);
 	x = x * Math.abs(x);	  
      

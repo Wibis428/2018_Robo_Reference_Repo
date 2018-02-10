@@ -15,7 +15,7 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 public class TalonConfigurer {
 	
-	public static final int DEFAULT_TALON_FUNCTION_TIMEOUT_MS = 10;
+	public static final int CONFIG_FUNCTION_TIMEOUT_MS = 10;
   
   /**
    * Configs the given talon as follows
@@ -51,9 +51,9 @@ public class TalonConfigurer {
      * 
      * Warning: currentLimit below 5 amps not recommended. See phoenix documentation for why. 
      */
-    talon.configPeakCurrentLimit(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-    talon.configPeakCurrentDuration(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-    talon.configContinuousCurrentLimit(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configPeakCurrentLimit(0, CONFIG_FUNCTION_TIMEOUT_MS);
+    talon.configPeakCurrentDuration(0, CONFIG_FUNCTION_TIMEOUT_MS);
+    talon.configContinuousCurrentLimit(0, CONFIG_FUNCTION_TIMEOUT_MS);
     talon.enableCurrentLimit(false);
     
     // Voltage Config Settings
@@ -64,21 +64,20 @@ public class TalonConfigurer {
      * with a ramp rate of 0 (i.e. no restriction on ramp rate), because they will already
      * mimic the output of the master.
      */
-    talon.configOpenloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-    talon.configClosedloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configOpenloopRamp(0, CONFIG_FUNCTION_TIMEOUT_MS);
     
     
     // factory default deadband is 4% (4% = 0.04)
-    talon.configNeutralDeadband(0.04, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configNeutralDeadband(0.04, CONFIG_FUNCTION_TIMEOUT_MS);
     
     // Voltage Compensation
     /* helps maintain consistency despite changing battery voltage. */
     // Sets max voltage for voltage compensation mode.
-    talon.configVoltageCompSaturation(12, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configVoltageCompSaturation(12, CONFIG_FUNCTION_TIMEOUT_MS);
     talon.enableVoltageCompensation(true);
     
     // Voltage Measurement (# of samples in rolling average)
-    talon.configVoltageMeasurementFilter(32, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configVoltageMeasurementFilter(32, CONFIG_FUNCTION_TIMEOUT_MS);
      
     talon.set(ControlMode.PercentOutput, 0);
   }
@@ -87,10 +86,14 @@ public class TalonConfigurer {
     /* IMPORTANT NOTE: Sensor readings are reported in native units. Velocity reported in native units per 100ms.
      * See CTRE documentation on github (https://github.com/CrossTheRoadElec/Phoenix-Documentation) for more info.
      */
+	  
+	/* Another Note, if using a Tachometer, see github documentation and software reference manual, 
+	 * as configuring them is slightly different than configuring most other sensors.
+	 */
 	
 	// Limit Switches
-    talon.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+    talon.configForwardLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.overrideLimitSwitchesEnable(false); // <- can be used to enable and disable limit switch features on the fly.
 	
 	// Extra Limit Switch Features
@@ -98,11 +101,11 @@ public class TalonConfigurer {
 	 * to enable this feature. Pass 0 to the 2nd argument to disable this feature. Arguments 2 & 3 aren't used.
 	 * See pg. 103 for some more info and a similar config for quadrature encoders w/ an index pin.
 	 */
-	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
 	// Other Sensors (see TalonSRX software reference manual for full list of supported sensors)
-	talon.configSelectedFeedbackSensor(FeedbackDevice.None, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configSelectedFeedbackSensor(FeedbackDevice.None, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.setSensorPhase(false); // <- use this function to ensure positive sensor readings correspond to positive motor output.
 	
 	/* if using an analog sensor, you can select whether or not it's continuous.
@@ -113,51 +116,49 @@ public class TalonConfigurer {
 	//talon.configSetParameter(ParamEnum.eFeedbackNotContinuous, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
 	
 	// Soft Limit can be used to stop a motor if the selectedSensorPosition goes past the given threshold.
-	// if (selectedSensorPosition > fwdSoftLimitThreshold) stop fwd movement.
-	// if (selectedSensorPosition < reverseSoftLimitThreshold) stop backward movement.
-	talon.configForwardSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configReverseSoftLimitThreshold(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configForwardSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configReverseSoftLimitEnable(false, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	// if (selectedSensorPosition > fwdSoftLimitThreshold) -> stop fwd movement.
+	// if (selectedSensorPosition < reverseSoftLimitThreshold) -> stop backward movement.
+	talon.configForwardSoftLimitThreshold(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configReverseSoftLimitThreshold(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configForwardSoftLimitEnable(false, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configReverseSoftLimitEnable(false, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.overrideSoftLimitsEnable(false); // <- pass false to disable the soft limits feature. pass true to honor the given configs above.
 	
 	// Config Sensor Measurement Settings (see pages. 50 & 52 in the TalonSRX software reference manual for more info)
-	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configVelocityMeasurementWindow(64, DEFAULT_TALON_FUNCTION_TIMEOUT_MS); // <- num of samples in rolling average.
+	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configVelocityMeasurementWindow(64, CONFIG_FUNCTION_TIMEOUT_MS); // <- num of samples in rolling average.
 	
-	// Note, if using a Tachometer, see github documentation and software reference manual, as they have some specific configs just for them.
-	talon.setSelectedSensorPosition(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	
+	talon.setSelectedSensorPosition(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
   }
   
   public static void configClosedLoopSettings(TalonSRX talon) {
-	talon.configClosedloopRamp(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	// same idea as configOpenLoopRamp(). closed loop ramp should normally just be 0 though.
+	talon.configClosedloopRamp(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	
-	// see software reference pg 72-74
+	// see software reference pg 72-74 & pg. 77
 	talon.selectProfileSlot(0, 0);
-	talon.config_kP(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.config_kI(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.config_kD(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.config_kF(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.config_kP(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.config_kI(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.config_kD(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.config_kF(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
 	// pg. 78
-	talon.config_IntegralZone(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.config_IntegralZone(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
 	// pg. 66
-	talon.configNominalOutputForward(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configNominalOutputReverse(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configPeakOutputForward(1, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
-	talon.configPeakOutputReverse(-1, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configNominalOutputForward(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configNominalOutputReverse(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputForward(1, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputReverse(-1, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	talon.configNeutralDeadband(0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configNeutralDeadband(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	talon.configAllowableClosedloopError(0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configAllowableClosedloopError(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
   }
   
   public static void configUpdateRate(TalonSRX talon) {
-	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 10, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 10, CONFIG_FUNCTION_TIMEOUT_MS);
 	// need to check documentation for default values.
 	// see pg. 89 for example usage.
 	// pgs. 131-134 have more in-depth info.
@@ -171,7 +172,7 @@ public class TalonConfigurer {
 	talon.getStickyFaults(stickyFaults);
 	talon.getFaults(nonStickyFaults);
 	
-	talon.clearStickyFaults(DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.clearStickyFaults(CONFIG_FUNCTION_TIMEOUT_MS);
   }
   
   public TalonSRX createMasterTalon(int id) {
@@ -195,11 +196,11 @@ public class TalonConfigurer {
   
   /* Random Notes on WPI_TalonSRX */
   /* Notes on TalonSRX Update Frames can be found in the PDF version of the software reference manual.
-   * Essentially, you ca think of a frame as similar to a camera frame, in that it is a snapshot of some data
-   * at a particular point in time. These frames are what are sent over the CAN cable to comunicate to other divices.
+   * Essentially, you can think of a frame as similar to a camera frame, in that it is a snapshot of some data
+   * at a particular point in time. These frames are what are sent over the CAN cable to communicate to other devices.
    * The TalonSRX utilize 2 main types of frames:
    * 1) Status Frame - A frame sent from the TalonSRX that contains data about it and sensors connected to it.
-   * 2) Control Frame - A frem sent to the TalonSRX that contains data about desired control modes and output values.
+   * 2) Control Frame - A frame sent to the TalonSRX that contains data about desired control modes and output values.
    * 
    * Please note that the Status Frame has various subtypes that each hold their own information and are published 
    * at different rates. Based off of last year's documentation, it appears there are 4 different types of Status Frame,

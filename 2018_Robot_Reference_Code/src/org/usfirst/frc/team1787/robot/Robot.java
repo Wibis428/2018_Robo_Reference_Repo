@@ -18,6 +18,8 @@ import org.usfirst.frc.team1787.robot.vision.ImageProcessor;
 import edu.wpi.first.wpilibj.Joystick;
 import edu.wpi.first.wpilibj.Preferences;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.internal.HardwareTimer;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 /**
@@ -89,6 +91,9 @@ public class Robot extends TimedRobot {
   // Preferences (interface used to get values from the SmartDash)
   Preferences prefs = Preferences.getInstance();
   
+  // Timer for testing
+  Timer myTimer;
+  
   /* ----------------------------------------------------------------
    * Member variables end here; only functions below this point!
    * ---------------------------------------------------------------- */
@@ -120,6 +125,8 @@ public class Robot extends TimedRobot {
 	   * 14) double check it's ok to remove all instances of CustomPIDController.
 	   * 15) Replace all instances of CustomPIDController if this is the case.
 	   */
+	  Timer.SetImplementation(new HardwareTimer());
+	  myTimer = new Timer();
   }
   
   /* While the robot is on, it can be in one of the following modes at a time:
