@@ -30,8 +30,8 @@ public class TalonConfigurer {
   public static void configOpenLoopSettings(TalonSRX talon) {
     System.out.println("Configuring TalonSRX #" + talon.getDeviceID());
     
-    /* config which direction the motor turns when calling talon.set() with positive values.
-     * by convention, this should be whichever direction that's considered forward.
+    /* If the motor doesn't spin in the desired direction when positive voltage is applied,
+     * then this function can be used to get the correct behavior.
      * Note: all motors in a master/follower chain need to have their direction set independently.
      */
     talon.setInverted(false);
@@ -42,12 +42,10 @@ public class TalonConfigurer {
     talon.setNeutralMode(NeutralMode.Brake);
     
     // Current (as in electric current) Config Settings
+    
     /* If a motor draws an amount of current greater than **peakCurrentLimit** amps
      * for more than **peakCurrentDuration** milliseconds, then current limiting will be activated.
      * This causes the current draw to be limited to **continuousCurrentLimit** amps.
-     * 
-     * If peakCurrentDuration is configured to 0, current limiting is enforced 
-     * immediately after current-draw surpasses the peak current threshold.
      * 
      * Warning: currentLimit below 5 amps not recommended. See phoenix documentation for why. 
      */
@@ -57,6 +55,28 @@ public class TalonConfigurer {
     talon.enableCurrentLimit(false);
     
     // Voltage Config Settings
+    
+    // set the voltage that corresponds to full output (i.e. an output of 1).
+    talon.configVoltageCompSaturation(12, CONFIG_FUNCTION_TIMEOUT_MS);
+    talon.enableVoltageCompensation(true);
+    
+    // Motor output is set to 0 if the requested output is less than the given deadband.
+    // factory default deadband is 4% (4% = 0.04)
+    talon.configNeutralDeadband(0.04, CONFIG_FUNCTION_TIMEOUT_MS);
+    
+	// config minimum and maximum allowable outputs for each direction
+	talon.configNominalOutputForward(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configNominalOutputReverse(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputForward(1, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configPeakOutputReverse(-1, CONFIG_FUNCTION_TIMEOUT_MS);
+    
+    /* Note: If requested output is less than the minimum, but within the deadband range,
+     * I believe the output will be 0 instead of being promoted to the minimum, but I haven't tested this.
+     */
+    
+    // config the number of samples used in the rolling average to calculate voltage.
+    talon.configVoltageMeasurementFilter(32, CONFIG_FUNCTION_TIMEOUT_MS);
+    
     /* Allows constraints on the rate at which applied voltage can change.
      * The input is the minimum amount of time (in seconds) required to go from an output of 0 to full output.
      * 
@@ -65,29 +85,17 @@ public class TalonConfigurer {
      * mimic the output of the master.
      */
     talon.configOpenloopRamp(0, CONFIG_FUNCTION_TIMEOUT_MS);
-    
-    
-    // factory default deadband is 4% (4% = 0.04)
-    talon.configNeutralDeadband(0.04, CONFIG_FUNCTION_TIMEOUT_MS);
-    
-    // Voltage Compensation
-    /* helps maintain consistency despite changing battery voltage. */
-    // Sets max voltage for voltage compensation mode.
-    talon.configVoltageCompSaturation(12, CONFIG_FUNCTION_TIMEOUT_MS);
-    talon.enableVoltageCompensation(true);
-    
-    // Voltage Measurement (# of samples in rolling average)
-    talon.configVoltageMeasurementFilter(32, CONFIG_FUNCTION_TIMEOUT_MS);
      
     talon.set(ControlMode.PercentOutput, 0);
   }
   
   public static void configSensorSettings(TalonSRX talon) {
     /* IMPORTANT NOTE: Sensor readings are reported in native units. Velocity reported in native units per 100ms.
-     * See CTRE documentation on github (https://github.com/CrossTheRoadElec/Phoenix-Documentation) for more info.
+     * See CTRE documentation on github (https://github.com/CrossTheRoadElec/Phoenix-Documentation), 
+     * as well as the TalonSRX Software Reference Manual for more info.
      */
 	  
-	/* Another Note, if using a Tachometer, see github documentation and software reference manual, 
+	/* Another note: if using a Tachometer, see github documentation and the TalonSRX software reference manual, 
 	 * as configuring them is slightly different than configuring most other sensors.
 	 */
 	
@@ -96,65 +104,57 @@ public class TalonConfigurer {
 	talon.configReverseLimitSwitchSource(LimitSwitchSource.FeedbackConnector, LimitSwitchNormal.NormallyOpen, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.overrideLimitSwitchesEnable(false); // <- can be used to enable and disable limit switch features on the fly.
 	
-	// Extra Limit Switch Features
-	/* Limit switches can be configured to zero the selectedSensor position when asserted. Pass 1 to the 2nd argument
-	 * to enable this feature. Pass 0 to the 2nd argument to disable this feature. Arguments 2 & 3 aren't used.
-	 * See pg. 103 for some more info and a similar config for quadrature encoders w/ an index pin.
-	 */
-	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
-	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
-	
 	// Other Sensors (see TalonSRX software reference manual for full list of supported sensors)
 	talon.configSelectedFeedbackSensor(FeedbackDevice.None, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.setSensorPhase(false); // <- use this function to ensure positive sensor readings correspond to positive motor output.
 	
-	/* if using an analog sensor, you can select whether or not it's continuous.
+	/* If using an analog sensor, you can select whether or not it's continuous.
 	 * An example of a continuous sensor is a gyro that will give readings 
 	 * above 360 degrees instead of just wrapping back to 0.
-	 * See TalonSRX software reference manual pg. 46 for more info.
 	 */
-	//talon.configSetParameter(ParamEnum.eFeedbackNotContinuous, 0, 0, 0, DEFAULT_TALON_FUNCTION_TIMEOUT_MS);
+	talon.configSetParameter(ParamEnum.eFeedbackNotContinuous, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	// Soft Limit can be used to stop a motor if the selectedSensorPosition goes past the given threshold.
-	// if (selectedSensorPosition > fwdSoftLimitThreshold) -> stop fwd movement.
-	// if (selectedSensorPosition < reverseSoftLimitThreshold) -> stop backward movement.
+	// Soft limit can be used to stop a motor if the selectedSensorPosition goes past the given threshold (essentially a software limit switch).
 	talon.configForwardSoftLimitThreshold(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitThreshold(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.configForwardSoftLimitEnable(false, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.configReverseSoftLimitEnable(false, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.overrideSoftLimitsEnable(false); // <- pass false to disable the soft limits feature. pass true to honor the given configs above.
 	
-	// Config Sensor Measurement Settings (see pages. 50 & 52 in the TalonSRX software reference manual for more info)
-	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, CONFIG_FUNCTION_TIMEOUT_MS);
+	/* Limit switches can be configured to zero the selectedSensor position when asserted. Pass 1 to the 2nd argument
+	 * to enable this feature. Pass 0 to the 2nd argument to disable this feature. Arguments 2 & 3 aren't used.
+	 * See pg. 106 for some more info and a similar config for quadrature encoders w/ an index pin.
+	 */
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitF, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configSetParameter(ParamEnum.eClearPositionOnLimitR, 0, 0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
+	
+	// Config Sensor Measurement Settings
+	talon.configVelocityMeasurementPeriod(VelocityMeasPeriod.Period_100Ms, CONFIG_FUNCTION_TIMEOUT_MS); // <- the "dt" used to calc. velocity from position.
 	talon.configVelocityMeasurementWindow(64, CONFIG_FUNCTION_TIMEOUT_MS); // <- num of samples in rolling average.
 	
 	talon.setSelectedSensorPosition(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
   }
   
   public static void configClosedLoopSettings(TalonSRX talon) {
-	// same idea as configOpenLoopRamp(). closed loop ramp should normally just be 0 though.
+	// Same idea as configOpenLoopRamp(). Closed loop ramp should normally just be 0 though.
 	talon.configClosedloopRamp(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	// see software reference pg 72-74 & pg. 77
+	// Config PID loop gains
+	// See software reference manual for more info on "profile slots"
+	/* Note: Still waiting for response from CTRE to clarify difference between
+	 * "pidIdx" and "slotIdx".
+	 */
 	talon.selectProfileSlot(0, 0);
 	talon.config_kP(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.config_kI(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.config_kD(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	talon.config_kF(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
-	// pg. 78
+	// When error is less than IntegralZone, error will accumulate up to MaxIntegralAccumulator.
 	talon.config_IntegralZone(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
-	
-	// pg. 66
-	talon.configNominalOutputForward(0, CONFIG_FUNCTION_TIMEOUT_MS);
-	talon.configNominalOutputReverse(0, CONFIG_FUNCTION_TIMEOUT_MS);
-	talon.configPeakOutputForward(1, CONFIG_FUNCTION_TIMEOUT_MS);
-	talon.configPeakOutputReverse(-1, CONFIG_FUNCTION_TIMEOUT_MS);
-	
-	talon.configNeutralDeadband(0, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.configMaxIntegralAccumulator(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
 	talon.configAllowableClosedloopError(0, 0, CONFIG_FUNCTION_TIMEOUT_MS);
-	
   }
   
   public static void configUpdateRate(TalonSRX talon) {
@@ -165,12 +165,15 @@ public class TalonConfigurer {
   }
   
   public static void checkBatteryReadings(TalonSRX talon) {
-	// see pg. 105-107
+	// See software reference manual for more info on faults and sticky faults.
 	StickyFaults stickyFaults = new StickyFaults();
 	Faults nonStickyFaults = new Faults();
 	
 	talon.getStickyFaults(stickyFaults);
 	talon.getFaults(nonStickyFaults);
+	
+	System.out.println("Faults: " + nonStickyFaults.toString());
+	System.out.println("Sticky Faults: " + stickyFaults.toString());
 	
 	talon.clearStickyFaults(CONFIG_FUNCTION_TIMEOUT_MS);
   }
@@ -185,14 +188,6 @@ public class TalonConfigurer {
 	returnVal.follow(master);
 	return returnVal;
   }
-  
-  /* Notes on other features:
-   * 
-   * 1) one talon can follow the output of another by using
-   * followerTalon.follow(masterTalon);
-   * 
-   * 
-   */
   
   /* Random Notes on WPI_TalonSRX */
   /* Notes on TalonSRX Update Frames can be found in the PDF version of the software reference manual.
