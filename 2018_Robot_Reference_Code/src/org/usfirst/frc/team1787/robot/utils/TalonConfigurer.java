@@ -136,7 +136,12 @@ public class TalonConfigurer {
   }
   
   public static void configClosedLoopSettings(TalonSRX talon) {
-	// Same idea as configOpenLoopRamp(). Closed loop ramp should normally just be 0 though.
+	/* Note: See TalonSRX Software Reference Manual for full overview of 
+	 * closed loop modes. Only minimal/basic closed loop features are showcased here.
+	 */
+	
+	// Same idea as configOpenLoopRamp()
+	// Closed loop ramp should normally just be 0 though, as other values might make closed loop modes jittery.
 	talon.configClosedloopRamp(0, CONFIG_FUNCTION_TIMEOUT_MS);
 	
 	// Config PID loop gains
@@ -179,14 +184,14 @@ public class TalonConfigurer {
   }
   
   public TalonSRX createMasterTalon(int id) {
-	TalonSRX returnVal = new TalonSRX(id);
-	return returnVal;
+	TalonSRX master = new TalonSRX(id);
+	return master;
   }
   
   public TalonSRX createFollowerTalon(int followerId, IMotorController master) {
-	TalonSRX returnVal = new TalonSRX(followerId);
-	returnVal.follow(master);
-	return returnVal;
+	TalonSRX follower = new TalonSRX(followerId);
+	follower.follow(master);
+	return follower;
   }
   
   /* Random Notes on WPI_TalonSRX */
