@@ -1,6 +1,7 @@
 package org.usfirst.frc.team1787.robot.utils;
 
 import com.ctre.phoenix.ParamEnum;
+import com.ctre.phoenix.motorcontrol.ControlFrame;
 import com.ctre.phoenix.motorcontrol.ControlMode;
 import com.ctre.phoenix.motorcontrol.Faults;
 import com.ctre.phoenix.motorcontrol.FeedbackDevice;
@@ -163,10 +164,30 @@ public class TalonConfigurer {
   }
   
   public static void configUpdateRate(TalonSRX talon) {
+	/* Notes on TalonSRX Update Frames can be found in the PDF version of the software reference manual.
+	 * Essentially, you can think of a frame as similar to a camera frame, in that it is a snapshot of some data
+     * at a particular point in time. These frames are what are sent over the CAN cable to communicate to other devices.
+     * The TalonSRX utilize 2 main types of frames:
+     * 1) Status Frame - A frame sent from the TalonSRX that contains data about it and sensors connected to it.
+     * 2) Control Frame - A frame sent to the TalonSRX that contains data about desired control modes and output values.
+     * 
+     * Please note that the Status Frame has various subtypes that each hold their own information and are published 
+     * at different rates.
+     * 
+     * See the TalonSRX Software Reference Manual (Section 20) for a full overview
+     * of how data is transferred over the CAN bus.
+     */
+	
+	// Note, VictorSPX must use StatusFrame instead of StatusFrameEnhanced.
 	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_1_General, 10, CONFIG_FUNCTION_TIMEOUT_MS);
-	// need to check documentation for default values.
-	// see pg. 89 for example usage.
-	// pgs. 131-134 have more in-depth info.
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_2_Feedback0, 20, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_3_Quadrature, 160, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_4_AinTempVbat, 160, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_8_PulseWidth, 160, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_10_MotionMagic, 160, CONFIG_FUNCTION_TIMEOUT_MS);
+	talon.setStatusFramePeriod(StatusFrameEnhanced.Status_13_Base_PIDF0, 160, CONFIG_FUNCTION_TIMEOUT_MS);
+	
+	talon.setControlFramePeriod(ControlFrame.Control_3_General, 10);
   }
   
   public static void checkBatteryReadings(TalonSRX talon) {
@@ -194,21 +215,4 @@ public class TalonConfigurer {
 	return follower;
   }
   
-  /* Random Notes on WPI_TalonSRX */
-  /* Notes on TalonSRX Update Frames can be found in the PDF version of the software reference manual.
-   * Essentially, you can think of a frame as similar to a camera frame, in that it is a snapshot of some data
-   * at a particular point in time. These frames are what are sent over the CAN cable to communicate to other devices.
-   * The TalonSRX utilize 2 main types of frames:
-   * 1) Status Frame - A frame sent from the TalonSRX that contains data about it and sensors connected to it.
-   * 2) Control Frame - A frame sent to the TalonSRX that contains data about desired control modes and output values.
-   * 
-   * Please note that the Status Frame has various subtypes that each hold their own information and are published 
-   * at different rates. Based off of last year's documentation, it appears there are 4 different types of Status Frame,
-   * each with different types of information in them, but this year's API Seems to suggest that there may now be more than
-   * 4 different types of status frames.
-   * 
-   * The update rate of these frames is likely just kept as the default (Actual default values can be found in PDF),
-   * but I will also note that these update rates can be specified using the "talon.setStatusFramePeriod" and "talon.setControlFramePeriod"
-   * However, please note that the not any period can be used. Rather a pre-defined set of periods is provided for you to choose from.
-   *  */
 }
