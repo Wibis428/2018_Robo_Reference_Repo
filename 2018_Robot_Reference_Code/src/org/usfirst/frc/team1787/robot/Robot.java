@@ -121,9 +121,6 @@ public class Robot extends TimedRobot {
 	   * 12) Finish setting up the dashboard so that all values show
 	   * 
 	   * 13) make arcadeDrive consistent with what I learned in robotics + fix documentation.
-	   * 
-	   * 14) double check it's ok to remove all instances of CustomPIDController.
-	   * 15) Replace all instances of CustomPIDController if this is the case.
 	   */
 	  Timer.SetImplementation(new HardwareTimer());
 	  myTimer = new Timer();
@@ -154,7 +151,6 @@ public class Robot extends TimedRobot {
   public void teleopPeriodic() {
     // Driving
     driveTrain.arcadeDrive(-rightStick.getY(), rightStick.getX());
-	  //driveTrain.tryCurveDrive(rightStick.getY(), -rightStick.getX(), rightStick.getRawButton(EXPELL_BUTTON));
 
     // Gear Shifter
     if (rightStick.getRawAxis(JOYSTICK_SLIDER_AXIS) < 0) {

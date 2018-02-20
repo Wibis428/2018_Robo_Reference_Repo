@@ -62,19 +62,28 @@ public class DriveTrain {
    */
   
   /**
-   * y value influences linear motion, 
-   * x value influences rate of rotation
-   * @param y
-   * @param x
+   * Intended to allow the robot to be drive with just one joystick:
+   * arcadeDrive(-stick.getY(), stick.getX());
+   * 
+   * Example Usages:
+   * arcadeDrive(0.5, 0) -> drive fwd at half speed,
+   * arcadeDrive(-1.0, 0) -> drive backward at full speed,
+   * arcadeDrive(0, 1.0) -> turn to the right in place at full speed,
+   * arcadeDrive(0, -0.5) -> turn to the left in place at half speed,
+   * arcadeDrive(0.75, 0.5) -> move fwds while turning to the right,
+   * arcadeDrive(0.75, -0.5) -> move fwds while turning to the left.
+   * 
+   * @param linearVelocity The desired linear velocity of the robot (as a percentage of full speed)
+   * @param angularVelocity The desired angual velocity of the robot (as a percentage of full speed)
    */
-  public void arcadeDrive(double y, double x) {
+  public void arcadeDrive(double linearVelocity, double angularVelocity) {
 	// use Math.abs() to preserve sign while squaring inputs
 	// inputs are squared to provide finer control at lower speeds.
-	y = y * Math.abs(y);
-	x = x * Math.abs(x);	  
+	linearVelocity = linearVelocity * Math.abs(linearVelocity);
+	angularVelocity = angularVelocity * Math.abs(angularVelocity);	  
      
-    double leftOutput = y + x;
-	double rightOutput = y - x;
+    double leftOutput = linearVelocity + angularVelocity;
+	double rightOutput = linearVelocity - angularVelocity;
 	  
 	// limit outputs to [-1, 1]
     leftOutput = Math.max(-1, Math.min(leftOutput, 1));
@@ -148,10 +157,10 @@ public class DriveTrain {
     SmartDashboard.putNumber("Average Velocity (meters per second)", getAvgVelocity());
     
     SmartDashboard.putData("Left Drive Encoder", leftEncoder);
-    SmartDashboard.putNumber("Left Drive Encoder Ticks", leftEncoder.getRaw());
+    SmartDashboard.putNumber("Left Drive Encoder Ticks", leftEncoder.get());
     
     SmartDashboard.putData("Right Drive Encoder", rightEncoder);
-    SmartDashboard.putNumber("Right Drive Encoder Ticks", rightEncoder.getRaw());
+    SmartDashboard.putNumber("Right Drive Encoder Ticks", rightEncoder.get());
     
     // Gear Shifter
     if (gearShifter.get() == HIGH_GEAR) {
