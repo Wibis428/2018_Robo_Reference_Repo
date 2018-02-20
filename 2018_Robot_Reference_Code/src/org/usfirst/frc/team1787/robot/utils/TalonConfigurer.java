@@ -16,7 +16,8 @@ import com.ctre.phoenix.motorcontrol.can.TalonSRX;
 
 public class TalonConfigurer {
 	
-	public static final int CONFIG_FUNCTION_TIMEOUT_MS = 10;
+  public static final int CONFIG_FUNCTION_TIMEOUT_MS = 10;
+  
   
   /**
    * Configs the given talon as follows
